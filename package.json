@@ -1,0 +1,30 @@
+{
+  "name": "cananalyzer_webapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanghandsondev/cananalyzer_webapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sanghandsondev/cananalyzer_webapp/issues"
+  },
+  "homepage": "https://github.com/sanghandsondev/cananalyzer_webapp#readme",
+  "dependencies": {
+    "axios": "^1.13.3",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

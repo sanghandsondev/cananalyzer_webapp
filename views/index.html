@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CAN Analyzer WebApp</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <h1>CAN Analyzer</h1>
+    <p>WebApp for CAN bus analysis.</p>
+
+    <main class="page">
+      <section class="pricing-card" aria-label="Licence pricing">
+        <h2 class="pricing-card__title">Licence</h2>
+        <p class="pricing-card__subtitle">Gói sử dụng cho khách hàng</p>
+
+        <div class="price">
+          <span class="price__amount">$1</span>
+          <span class="price__period">/ năm</span>
+        </div>
+
+        <ul class="features" aria-label="Features">
+          <li>Truy cập đầy đủ tính năng phân tích CAN</li>
+          <li>Cập nhật định kỳ</li>
+          <li>Hỗ trợ cơ bản</li>
+        </ul>
+
+        <button id="buyNowBtn" type="button" class="btn btn--primary">
+          Buy Now
+        </button>
+      </section>
+    </main>
+
+    <!-- Modal -->
+    <div id="paymentModal" class="modal" aria-hidden="true">
+      <div class="modal__overlay" data-close="true"></div>
+
+      <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
+        <div class="modal__header">
+          <h3 id="paymentModalTitle" class="modal__title">Chọn phương thức thanh toán</h3>
+          <button type="button" class="modal__close" aria-label="Đóng" data-close="true">×</button>
+        </div>
+
+        <div class="modal__body">
+          <p class="modal__hint">Tạm thời hỗ trợ:</p>
+
+          <div class="checkout">
+            <button type="button" class="paypal-btn" aria-label="Thanh toán bằng PayPal">
+              <span class="paypal-btn__logo" aria-hidden="true">
+                <svg viewBox="0 0 120 32" height="18" focusable="false">
+                  <text x="0" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#003087">Pay</text>
+                  <text x="40" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#009cde">Pal</text>
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+  </body>
+</html>
