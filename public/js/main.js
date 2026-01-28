@@ -1,36 +1,91 @@
-console.log("main.js loaded");
+document.addEventListener('DOMContentLoaded', () => {
+  const buyNowBtn = document.getElementById('buyNowBtn');
+  const modal = document.getElementById('paymentModal');
+  const closeTriggers = modal.querySelectorAll('[data-close="true"]');
+  const paymentForm = document.getElementById('paymentForm');
+  const emailInput = document.getElementById('emailInput');
+  const emailError = document.getElementById('emailError');
+  const submitPaymentBtn = document.getElementById('submitPaymentBtn');
+  const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
 
-const buyNowBtn = document.getElementById("buyNowBtn");
-const paymentModal = document.getElementById("paymentModal");
-const paypalBtn = document.getElementById("paypalBtn");
+  function openModal() {
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    emailInput.focus();
+  }
 
-function openModal() {
-  if (!paymentModal) return;
-  paymentModal.classList.add("is-open");
-  paymentModal.setAttribute("aria-hidden", "false");
-}
+  function closeModal() {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
 
-function closeModal() {
-  if (!paymentModal) return;
-  paymentModal.classList.remove("is-open");
-  paymentModal.setAttribute("aria-hidden", "true");
-}
+  function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+  }
 
-buyNowBtn?.addEventListener("click", openModal);
+  function updateSubmitButtonState() {
+    const isEmailValid = validateEmail(emailInput.value);
+    let isPaymentMethodSelected = false;
+    paymentMethodRadios.forEach(radio => {
+      if (radio.checked) {
+        isPaymentMethodSelected = true;
+      }
+    });
 
-paypalBtn?.addEventListener("click", function() {
-          window.location.href = "/pay";
-});
+    if (isEmailValid && isPaymentMethodSelected) {
+      submitPaymentBtn.disabled = false;
+    } else {
+      submitPaymentBtn.disabled = true;
+    }
+  }
 
-// Sửa lại dùng axios để gọi API PayPal chứ k phải xài window.location.href = "/pay";
-// Để xử lý response các kiểu 200, 4xx, 5xx từ server.js
+  function handleEmailValidation() {
+    if (emailInput.value === '') {
+      emailError.textContent = '';
+    } else if (!validateEmail(emailInput.value)) {
+      emailError.textContent = 'Vui lòng nhập một địa chỉ email hợp lệ.';
+    } else {
+      emailError.textContent = '';
+    }
+    updateSubmitButtonState();
+  }
 
-paymentModal?.addEventListener("click", (e) => {
-  const target = e.target;
-  if (target?.dataset?.close === "true") closeModal();
-});
+  buyNowBtn.addEventListener('click', openModal);
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
+  closeTriggers.forEach(trigger => {
+    trigger.addEventListener('click', closeModal);
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+      closeModal();
+    }
+  });
+
+  emailInput.addEventListener('input', handleEmailValidation);
+
+  paymentMethodRadios.forEach(radio => {
+    radio.addEventListener('change', updateSubmitButtonState);
+  });
+
+  paymentForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleEmailValidation(); // Final check
+
+    if (!submitPaymentBtn.disabled) {
+      const email = emailInput.value;
+      const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+      if (selectedPaymentMethod === 'paypal') {
+        // Redirect to PayPal payment route with email
+        window.location.href = `/paypal/pay?email=${encodeURIComponent(email)}`;
+      }
+      // Add other payment methods here if needed
+    }
+  });
+
+  // Initial state check
+  updateSubmitButtonState();
 });
 
