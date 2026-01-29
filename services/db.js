@@ -12,6 +12,11 @@ const db = new sqlite3.Database(dbPath, (err) => {
       orderId TEXT UNIQUE,
       email TEXT,
       status TEXT,
+      payerId TEXT,
+      payerEmail TEXT,
+      payerGivenName TEXT,
+      payerSurname TEXT,
+      payerCountryCode TEXT,
       webhookData TEXT,
       licenseStatus TEXT DEFAULT 'NOT_CREATED',
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP

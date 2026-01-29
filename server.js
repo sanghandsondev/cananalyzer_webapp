@@ -3,6 +3,7 @@ const path = require("path");
 const express = require("express");
 const paypal = require("./services/paypal");
 const db = require("./services/db");
+const license = require("./services/license");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,14 +40,44 @@ app.get("/paypal/approve", async (req, res) => {
       if (captureData.status === "COMPLETED") {
         status = "COMPLETED";
         message = "Thanh toán thành công! Giấy phép sẽ được gửi đến email của bạn.";
-        db.run("UPDATE orders SET status = ? WHERE orderId = ?", ["COMPLETED", orderId]);
+        
+        // Extract payer info from capture data
+        const payer = captureData.payer;
+        const payerInfo = {
+          payerId: payer.payer_id,
+          payerEmail: payer.email_address,
+          payerGivenName: payer.name.given_name,
+          payerSurname: payer.name.surname,
+          payerCountryCode: payer.address.country_code
+        };
+
+        db.run(
+          `UPDATE orders SET 
+            status = ?, 
+            payerId = ?, 
+            payerEmail = ?, 
+            payerGivenName = ?, 
+            payerSurname = ?, 
+            payerCountryCode = ? 
+          WHERE orderId = ?`,
+          ["COMPLETED", payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId]
+        );
         
         // Trigger license creation only if not already created
         db.get("SELECT email, licenseStatus FROM orders WHERE orderId = ?", [orderId], (err, row) => {
           if (row && row.licenseStatus === 'NOT_CREATED') {
-            console.log(`TODO: Create license for ${row.email} for order ${orderId}`);
-            // Update license status after creation
+            // POST API to create License here (include: email, orderId, etc)
             db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["REQUEST_CREATED", orderId]);
+            
+            license.createLicense(orderId).then(licenseResult => {
+              if (licenseResult) {
+                console.log(`Successfully requested license creation for order ${orderId}`);
+              } else {
+                console.error(`Failed to request license creation for order ${orderId}`);
+                // Optionally, revert licenseStatus or add a retry mechanism
+                db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["CREATION_FAILED", orderId]);
+              }
+            });
           }
         });
 
@@ -115,6 +146,21 @@ app.get("/api/paypal/pay", async (req, res) => {
   }
 });
 
+app.get("/api/paypal/orders/:orderId/status", (req, res) => {
+  const { orderId } = req.params;
+  db.get("SELECT status, licenseStatus FROM orders WHERE orderId = ?", [orderId], (err, row) => {
+    if (err) {
+      console.error(`Error fetching status for order ${orderId}:`, err);
+      return res.status(500).json({ error: "Failed to fetch order status." });
+    }
+    if (row) {
+      res.json({ status: row.status, licenseStatus: row.licenseStatus });
+    } else {
+      res.status(404).json({ error: "Order not found." });
+    }
+  });
+});
+
 app.post("/api/paypal/webhook", (req, res) => {
   const webhookEvent = req.body;
 
@@ -146,9 +192,16 @@ app.post("/api/paypal/webhook", (req, res) => {
           db.get("SELECT email FROM orders WHERE orderId = ?", [orderId], (err, row) => {
             if (row) {
               console.log(`TODO from Webhook: Create license for ${row.email} for order ${orderId}`);
-              // TODO: POST API to create License here
-              // Update license status after creation
+              // POST API to create License here
               db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["REQUEST_CREATED", orderId]);
+              license.createLicense(orderId).then(licenseResult => {
+                if (licenseResult) {
+                  console.log(`Webhook: Successfully requested license creation for order ${orderId}`);
+                } else {
+                  console.error(`Webhook: Failed to request license creation for order ${orderId}`);
+                  db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["CREATION_FAILED", orderId]);
+                }
+              });
             } else {
               console.error(`Webhook: Could not find order ${orderId} to create license.`);
             }
@@ -165,21 +218,41 @@ app.post("/api/paypal/webhook", (req, res) => {
   res.sendStatus(200); // Respond to PayPal to acknowledge receipt
 });
 
-app.get("/api/paypal/orders/:orderId/status", (req, res) => {
-  const { orderId } = req.params;
-  db.get("SELECT status, licenseStatus FROM orders WHERE orderId = ?", [orderId], (err, row) => {
+// ------------------------ License Service routes ------------------------
+app.post("/api/license/notify", (req, res) => {
+  const { orderId, licenseKey } = req.body;
+
+  if (!orderId || !licenseKey) {
+    return res.status(400).json({ error: "Missing orderId or licenseKey" });
+  }
+
+  console.log(`Received license key for order ${orderId}`);
+
+  // Update license status in DB
+  db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["CREATED", orderId], function(err) {
     if (err) {
-      console.error(`Error fetching status for order ${orderId}:`, err);
-      return res.status(500).json({ error: "Failed to fetch order status." });
+      console.error(`Error updating license status for order ${orderId}:`, err);
+      return res.status(500).json({ error: "Database error" });
     }
-    if (row) {
-      res.json({ status: row.status, licenseStatus: row.licenseStatus });
-    } else {
-      res.status(404).json({ error: "Order not found." });
+    if (this.changes === 0) {
+      console.warn(`License notification: Order ${orderId} not found.`);
+      return res.status(404).json({ error: "Order not found" });
     }
+
+    // TODO: Send the license key to the user's email
+    db.get("SELECT email FROM orders WHERE orderId = ?", [orderId], (err, row) => {
+      if (row) {
+        console.log(`TODO: Send license ${licenseKey} to ${row.email} for order ${orderId}`);
+        // Implement email sending logic here
+      }
+    });
+
+    res.status(200).json({ message: "License status updated successfully" });
   });
 });
 
+
+// ---- For Test ----
 app.get("/api/paypal/orders", (req, res) => {
   db.all("SELECT * FROM orders", [], (err, rows) => {
     if (err) {
@@ -187,6 +260,21 @@ app.get("/api/paypal/orders", (req, res) => {
       return res.status(500).json({ error: "Failed to fetch orders." });
     }
     res.json(rows);
+  });
+});
+
+app.get("/api/paypal/orders/:orderId", (req, res) => {
+  const { orderId } = req.params;
+  db.get("SELECT * FROM orders WHERE orderId = ?", [orderId], (err, row) => {
+    if (err) {
+      console.error(`Error fetching order ${orderId} from DB:`, err);
+      return res.status(500).json({ error: "Failed to fetch order." });
+    }
+    if (row) {
+      res.json(row);
+    } else {
+      res.status(404).json({ error: "Order not found." });
+    }
   });
 });
 
