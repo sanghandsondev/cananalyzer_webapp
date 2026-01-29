@@ -11,25 +11,46 @@
     <p>WebApp for CAN bus analysis.</p>
 
     <main class="page">
-      <section class="pricing-card" aria-label="Licence pricing">
-        <h2 class="pricing-card__title">Licence</h2>
-        <p class="pricing-card__subtitle">Gói sử dụng cho khách hàng</p>
+      <div class="page__container">
+        <section class="pricing-card" aria-label="Licence pricing">
+          <h2 class="pricing-card__title">Licence</h2>
+          <p class="pricing-card__subtitle">Gói sử dụng cho khách hàng</p>
 
-        <div class="price">
-          <span class="price__amount">$100.00</span>
-          <span class="price__period">/ năm</span>
-        </div>
+          <div class="price">
+            <span class="price__amount">$100.00</span>
+            <span class="price__period">/ năm</span>
+          </div>
 
-        <ul class="features" aria-label="Features">
-          <li>Truy cập đầy đủ tính năng phân tích CAN</li>
-          <li>Cập nhật định kỳ</li>
-          <li>Hỗ trợ cơ bản</li>
-        </ul>
+          <ul class="features" aria-label="Features">
+            <li>Truy cập đầy đủ tính năng phân tích CAN</li>
+            <li>Cập nhật định kỳ</li>
+            <li>Hỗ trợ cơ bản</li>
+          </ul>
 
-        <button id="buyNowBtn" type="button" class="btn btn--primary">
-          Buy Now
-        </button>
-      </section>
+          <button id="buyNowBtn" type="button" class="btn btn--primary">
+            Buy Now
+          </button>
+        </section>
+
+        <section class="downloads-card" aria-label="Downloads">
+          <h2 class="downloads-card__title">Downloads</h2>
+          <p class="downloads-card__subtitle">Tải xuống ứng dụng cho hệ điều hành của bạn</p>
+          <ul class="download-links">
+            <li>
+              <a href="/downloads/windows_x64/can-analyzer-windows-x64-1.0.0.zip" class="btn-download" download>
+                <span class="btn-download__os">Windows</span>
+                <span class="btn-download__icon" aria-hidden="true">↓</span>
+              </a>
+            </li>
+            <li>
+              <a href="/downloads/linux_x86-64/can-analyzer-linux-x86-64-1.0.0.tar.gz" class="btn-download" download>
+                <span class="btn-download__os">Linux</span>
+                <span class="btn-download__icon" aria-hidden="true">↓</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+      </div>
     </main>
 
     <!-- Modal -->

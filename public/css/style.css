@@ -10,9 +10,17 @@ body {
   place-items: center;
 }
 
+.page__container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
 /* Pricing card */
 .pricing-card {
-  width: min(520px, 100%);
+  width: min(420px, 100%);
   background: #fff;
   border: 1px solid rgba(17, 24, 39, 0.08);
   border-radius: 16px;
@@ -303,6 +311,61 @@ body {
 
 .paypal-btn__text {
   font-weight: 700;
+}
+
+/* Downloads Card */
+.downloads-card {
+  width: min(420px, 100%);
+  background: #fff;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08);
+}
+
+.downloads-card__title {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.downloads-card__subtitle {
+  margin: 0 0 16px;
+  color: rgba(17, 24, 39, 0.7);
+}
+
+.download-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-download {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #111;
+  font-weight: 600;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.btn-download:hover {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.25);
+}
+
+.btn-download__icon {
+  font-size: 20px;
+  font-weight: bold;
 }
 
 /* Result Page Styles */
