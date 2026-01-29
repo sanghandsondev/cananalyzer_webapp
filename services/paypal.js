@@ -1,5 +1,3 @@
-console.log("testing paypal service");
-
 const axios = require("axios");
 
 async function generateAccessToken() {
