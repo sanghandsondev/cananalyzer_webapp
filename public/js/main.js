@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (selectedPaymentMethod === 'paypal') {
         // Redirect to PayPal payment route with email
-        window.location.href = `/paypal/pay?email=${encodeURIComponent(email)}`;
+        window.location.href = `/api/paypal/pay?email=${encodeURIComponent(email)}`;
       }
       // Add other payment methods here if needed
     }

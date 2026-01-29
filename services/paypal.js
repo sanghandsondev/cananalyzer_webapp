@@ -48,19 +48,19 @@ exports.createOrder = async function(email) {
             }
         ],
         application_context: {
-            return_url: process.env.BASE_URL + "/approve",
-            cancel_url: process.env.BASE_URL + "/cancel-order",
+            return_url: process.env.BASE_URL + "/paypal/approve",
+            cancel_url: process.env.BASE_URL + "/paypal/cancel-order",
             shipping_preference: "NO_SHIPPING",
             user_action: "PAY_NOW",
             brand_name: "CAN Analyzer Home Page"
         }
     };
 
-    // if (email) {
-    //     orderData.payer = {
-    //         email_address: email
-    //     };
-    // }
+    if (email) {
+        orderData.payer = {
+            email_address: email
+        };
+    }
 
     try {
         const response = await axios({
@@ -104,8 +104,16 @@ exports.capturePayment = async function(orderId) {
 
         return response.data;
     } catch (error) {
-        console.error("Error capturing payment:", error.response ? error.response.data : error.message);
-        // Trả về null nếu có lỗi, ví dụ: thanh toán bị từ chối
+        const errorData = error.response ? error.response.data : null;
+        console.error("Error capturing payment:", errorData || error.message);
+        
+        // Handle cases where payer action is required (e.g. 3D Secure)
+        if (errorData && errorData.name === 'UNPROCESSABLE_ENTITY' && errorData.details?.[0]?.issue === 'PAYER_ACTION_REQUIRED') {
+            console.log("Payer action is required to complete the payment.");
+            return { status: 'PAYER_ACTION_REQUIRED' };
+        }
+        
+        // For other errors, return null
         return null;
     }
 }
