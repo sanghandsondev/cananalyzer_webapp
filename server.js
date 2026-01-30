@@ -166,6 +166,7 @@ app.post("/api/paypal/webhook", (req, res) => {
 
   // Store webhook data for auditing
   const orderId = webhookEvent.resource?.id;
+  console.log(`Received webhook for order ${orderId}:`, webhookEvent);
   if (orderId) {
     const { event_type, resource_type, resource_version, summary } = webhookEvent;
     db.run(
