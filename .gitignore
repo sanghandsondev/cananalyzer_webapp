@@ -36,3 +36,7 @@ Thumbs.db
 # Package lock files
 yarn.lock
 pnpm-lock.yaml
+
+# Embedded databases
+database.sqlite
+*.sqlite3
