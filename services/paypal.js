@@ -28,18 +28,18 @@ exports.createOrder = async function(email) {
                         quantity: "1",
                         unit_amount: {
                             currency_code: "USD",
-                            value: "100.00"
+                            value: "1.00"
                         }
                     },
                 ],
 
                 amount: {
                     currency_code: "USD",
-                    value: "100.00",
+                    value: "1.00",
                     breakdown: {
                         item_total: {
                             currency_code: "USD",
-                            value: "100.00"
+                            value: "1.00"
                         }
                     }
                 }
