@@ -180,7 +180,7 @@ app.post("/api/paypal/webhook", (req, res) => {
   }
 
   // We are only interested in completed checkouts
-  if (webhookEvent.event_type === "CHECKOUT.ORDER.COMPLETED") {
+  if (webhookEvent.event_type === "CHECKOUT.ORDER.COMPLETED" || webhookEvent.event_type === "PAYMENT.CAPTURE.COMPLETED") {
     console.log(`Webhook received: Order ${orderId} completed.`);
 
     // Check if license has already been created before processing
