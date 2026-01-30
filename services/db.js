@@ -17,7 +17,10 @@ const db = new sqlite3.Database(dbPath, (err) => {
       payerGivenName TEXT,
       payerSurname TEXT,
       payerCountryCode TEXT,
-      webhookData TEXT,
+      webhookEventType TEXT,
+      webhookResourceType TEXT,
+      webhookResourceVersion TEXT,
+      webhookSummary TEXT,
       licenseStatus TEXT DEFAULT 'NOT_CREATED',
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`, (err) => {

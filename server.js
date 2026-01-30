@@ -167,7 +167,16 @@ app.post("/api/paypal/webhook", (req, res) => {
   // Store webhook data for auditing
   const orderId = webhookEvent.resource?.id;
   if (orderId) {
-    db.run("UPDATE orders SET webhookData = ? WHERE orderId = ?", [JSON.stringify(webhookEvent), orderId]);
+    const { event_type, resource_type, resource_version, summary } = webhookEvent;
+    db.run(
+      `UPDATE orders SET 
+        webhookEventType = ?, 
+        webhookResourceType = ?, 
+        webhookResourceVersion = ?, 
+        webhookSummary = ? 
+      WHERE orderId = ?`, 
+      [event_type, resource_type, resource_version, summary, orderId]
+    );
   }
 
   // We are only interested in completed checkouts
