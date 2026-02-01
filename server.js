@@ -4,6 +4,7 @@ const express = require("express");
 const paypal = require("./services/paypal");
 const db = require("./services/db");
 const license = require("./services/license");
+const mailer = require("./services/mailer");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -286,6 +287,17 @@ app.get("/api/paypal/orders/:orderId", (req, res) => {
       res.status(404).json({ error: "Order not found." });
     }
   });
+});
+
+app.get("/api/mailer/test", async (req, res) => {
+  try {
+    await mailer.sendEmail("sanganhhungtuoitre123@gmail.com", "Test Email", "<h1>This is a test email</h1>");
+    res.json({ message: "Test email sent successfully." });
+    console.log("Test email sent successfully.");
+  } catch (error) {
+    console.error("Error sending test email:", error);
+    res.status(500).json({ error: "Failed to send test email." });
+  }
 });
 
 // ------------------------ Start the server ------------------------
