@@ -46,7 +46,7 @@ exports.createOrder = async function(email) {
             }
         ],
         application_context: {
-            return_url: process.env.BASE_URL + "paypal/approve",
+            return_url: process.env.BASE_URL + "/paypal/approve",
             cancel_url: process.env.BASE_URL + "/api/paypal/cancel-order",
             shipping_preference: "NO_SHIPPING",
             user_action: "PAY_NOW",
