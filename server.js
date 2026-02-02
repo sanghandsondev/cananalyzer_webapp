@@ -15,7 +15,11 @@ app.set("views", path.join(__dirname, "views"));
 
 // ------------------------ Middlewares ------------------------
 app.use(express.static(path.join(__dirname, "public")));
-app.use(express.json());   // Use express.json() to parse JSON bodies from webhooks
+// app.use(express.json());
+app.use((req, res, next) => {
+  if (req.path === "/api/paypal/webhook") return next();  // Webhook sẽ parse raw riêng để phục vụ verify signature.
+  return express.json()(req, res, next);
+});
 
 // ------------------------ Serve html (static files) from /views ------------------------
 app.get("/", (req, res) => {
@@ -23,7 +27,7 @@ app.get("/", (req, res) => {
 });
 
 // ------------------------ PayPal routes ------------------------
-app.get("/paypal/approve", async (req, res) => {
+app.get("/api/paypal/approve", async (req, res) => {
   try {
     const { token: orderId } = req.query;
     if (!orderId) {
@@ -61,7 +65,10 @@ app.get("/paypal/approve", async (req, res) => {
             payerSurname = ?, 
             payerCountryCode = ? 
           WHERE orderId = ?`,
-          ["COMPLETED", payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId]
+          ["COMPLETED", payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId],
+          (err) => {
+            if (err) console.error(`Error updating payer info for order ${orderId}:`, err);
+          }
         );
         
         // Trigger license creation only if not already created
@@ -102,17 +109,17 @@ app.get("/paypal/approve", async (req, res) => {
   }
 });
 
-app.get("/paypal/cancel-order", (req, res) => {
-  const { token: orderId } = req.query;
-  if (orderId) {
-    db.run("DELETE FROM orders WHERE orderId = ?", [orderId], (err) => {
-      if (err) {
-        console.error(`Error deleting canceled order ${orderId}:`, err);
-      } else {
-        console.log(`Order ${orderId} canceled and deleted from DB.`);
-      }
-    });
-  }
+app.get("/api/paypal/cancel-order", (req, res) => {
+  // const { token: orderId } = req.query;
+  // if (orderId) {
+  //   db.run("DELETE FROM orders WHERE orderId = ?", [orderId], (err) => {
+  //     if (err) {
+  //       console.error(`Error deleting canceled order ${orderId}:`, err);
+  //     } else {
+  //       console.log(`Order ${orderId} canceled and deleted from DB.`);
+  //     }
+  //   });
+  // }
   res.redirect("/");
 });
 
@@ -147,85 +154,131 @@ app.get("/api/paypal/pay", async (req, res) => {
   }
 });
 
-app.get("/api/paypal/orders/:orderId/status", (req, res) => {
-  const { orderId } = req.params;
-  db.get("SELECT status, licenseStatus FROM orders WHERE orderId = ?", [orderId], (err, row) => {
-    if (err) {
-      console.error(`Error fetching status for order ${orderId}:`, err);
-      return res.status(500).json({ error: "Failed to fetch order status." });
-    }
-    if (row) {
-      res.json({ status: row.status, licenseStatus: row.licenseStatus });
-    } else {
-      res.status(404).json({ error: "Order not found." });
-    }
-  });
-});
+app.post("/api/paypal/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
+  let webhookEvent;
 
-app.post("/api/paypal/webhook", (req, res) => {
-  const webhookEvent = req.body;
-
-  // Store webhook data for auditing
-  const orderId = webhookEvent.resource?.id;
-  console.log(`Received webhook for order ${orderId}:`, webhookEvent);
-  if (orderId) {
-    const { event_type, resource_type, resource_version, summary } = webhookEvent;
-    db.run(
-      `UPDATE orders SET 
-        webhookEventType = ?, 
-        webhookResourceType = ?, 
-        webhookResourceVersion = ?, 
-        webhookSummary = ? 
-      WHERE orderId = ?`, 
-      [event_type, resource_type, resource_version, summary, orderId]
-    );
+  try {
+    webhookEvent = JSON.parse(req.body.toString("utf8"));
+  } catch (error) {
+    console.error("Webhook: Error parsing JSON body:", error);
+    return res.sendStatus(400);
   }
 
-  // We are only interested in completed checkouts
-  if (webhookEvent.event_type === "CHECKOUT.ORDER.COMPLETED" || webhookEvent.event_type === "PAYMENT.CAPTURE.COMPLETED") {
-    console.log(`Webhook received: Order ${orderId} completed.`);
+  // 1. Verify signature
+  try {
+    const result = await paypal.verifyWebhookSignature({
+      headers: req.headers,
+      event: webhookEvent,
+      rawBody: req.body
+    });
 
-    // Check if license has already been created before processing
-    db.get("SELECT licenseStatus FROM orders WHERE orderId = ?", [orderId], (err, row) => {
+    if (!result || !result.verified) {
+      console.warn("Webhook signature NOT verified:", result);
+      return res.sendStatus(401);
+    }
+  } catch(e) {
+    console.error("Webhook: Error verifying signature:", e.message);
+    return res.sendStatus(500);
+  }
+  
+  // 2. Extract orderId correctly (VERY IMPORTANT)
+  const eventType = webhookEvent.event_type;
+  let orderId = null;
+
+  if (eventType?.startsWith("CHECKOUT.ORDER.")) {
+    orderId = webhookEvent.resource?.id || null;
+  }
+
+  if (eventType?.startsWith("PAYMENT.CAPTURE.")) {
+    orderId = webhookEvent.resource?.supplementary_data?.related_ids?.order_id ||
+              webhookEvent.resource?.supplementary_data?.related_ids?.orderId ||
+              null;
+  }
+
+  console.log(`Verified webhook: ${eventType} for order ${orderId}`);
+
+  if (!orderId) {
+    console.warn("Webhook: orderId not found in event resource.");
+    return res.sendStatus(400);
+  }
+
+  // 3. Store webhook data for auditing
+  const { event_type, resource_type, resource_version, summary } = webhookEvent;
+  db.run(
+    `UPDATE orders SET 
+      webhookEventType = ?, 
+      webhookResourceType = ?, 
+      webhookResourceVersion = ?, 
+      webhookSummary = ? 
+    WHERE orderId = ?`, 
+    [event_type, resource_type, resource_version, summary, orderId]
+  );
+
+  // 4. Business logic - process only PAYMENT.CAPTURE.COMPLETED
+  if (eventType === "PAYMENT.CAPTURE.COMPLETED") {
+    console.log(`Webhook received: Order ${orderId} payment completed.`);
+
+    db.get("SELECT email, licenseStatus, payerId FROM orders WHERE orderId = ?", [orderId], (err, row) => {
       if (err) {
         console.error(`Webhook: DB error checking license status for order ${orderId}`, err);
         return;
       }
 
-      if (row && row.licenseStatus === 'NOT_CREATED') {
-        // Update order status in DB
+      if (!row) {
+        console.warn(`Webhook: Order ${orderId} not found in DB.`);
+        return;
+      }
+
+      // If payer info hasn't been saved yet (e.g., user didn't return to /approve), save it now.
+      if (!row.payerId && webhookEvent.resource?.payer) {
+        const payer = webhookEvent.resource.payer;
+        const payerInfo = {
+          payerId: payer.payer_id,
+          payerEmail: payer.email_address,
+          payerGivenName: payer.name?.given_name,
+          payerSurname: payer.name?.surname,
+          payerCountryCode: payer.address?.country_code
+        };
+
+        console.log(`Webhook: Saving payer info for order ${orderId}`);
+        db.run(
+          `UPDATE orders SET 
+            payerId = ?, payerEmail = ?, payerGivenName = ?, payerSurname = ?, payerCountryCode = ?
+          WHERE orderId = ?`,
+          [payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId],
+          (err) => {
+            if (err) console.error(`Webhook: Error updating payer info for order ${orderId}:`, err);
+          }
+        );
+      }
+
+      if (row.licenseStatus === 'NOT_CREATED') {
         db.run("UPDATE orders SET status = ? WHERE orderId = ?", ["COMPLETED", orderId], function(err) {
-          if (err) {
+          if(err) {
             console.error(`Webhook: Error updating status for order ${orderId}`, err);
             return;
           }
-          // Get user email and create license
-          db.get("SELECT email FROM orders WHERE orderId = ?", [orderId], (err, row) => {
-            if (row) {
-              console.log(`TODO from Webhook: Create license for ${row.email} for order ${orderId}`);
-              // POST API to create License here
-              db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["REQUEST_CREATED", orderId]);
-              license.createLicense(orderId).then(licenseResult => {
-                if (licenseResult) {
-                  console.log(`Webhook: Successfully requested license creation for order ${orderId}`);
-                } else {
-                  console.error(`Webhook: Failed to request license creation for order ${orderId}`);
-                  db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["CREATION_FAILED", orderId]);
-                }
-              });
-            } else {
-              console.error(`Webhook: Could not find order ${orderId} to create license.`);
-            }
-          });
+
+          if (row.email) {
+            db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["REQUEST_CREATED", orderId]);
+            console.log(`TODO from Webhook: Create license for ${row.email} for order ${orderId}`);
+            license.createLicense(orderId).then(licenseResult => {
+              if (licenseResult) {
+                console.log(`Webhook: Successfully requested license creation for order ${orderId}`);
+              } else {
+                console.error(`Webhook: Failed to request license creation for order ${orderId}`);
+                db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["CREATION_FAILED", orderId]);
+              }
+            });
+          } else {
+            console.error(`Webhook: Could not find order ${orderId} to create license.`);
+          }
         });
-      } else if (row) {
-        console.log(`Webhook: License for order ${orderId} already created. Ignoring webhook.`);
       } else {
-        console.warn(`Webhook: Order ${orderId} not found.`);
+        console.log(`Webhook: License for order ${orderId} already requested or created (status: ${row.licenseStatus}). Ignoring webhook.`);
       }
     });
   }
-
   res.sendStatus(200); // Respond to PayPal to acknowledge receipt
 });
 
@@ -250,18 +303,27 @@ app.post("/api/license/notify", (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // TODO: Send the license key to the user's email
+    // Send the license key to the user's email
     db.get("SELECT email FROM orders WHERE orderId = ?", [orderId], (err, row) => {
-      if (row) {
-        console.log(`TODO: Send license ${licenseKey} to ${row.email} for order ${orderId}`);
-        // Implement email sending logic here
+      if (err) {
+        console.error(`Error fetching email for order ${orderId}:`, err);
+        return;
+      }
+      if (row && row.email) {
+        console.log(`Sending license ${licenseKey} to ${row.email} for order ${orderId}`);
+        const emailSubject = "Your CAN Analyzer License Key";
+        const emailContent = mailer.getLicenseEmailTemplate(licenseKey);
+        mailer.sendEmail(row.email, emailSubject, emailContent)
+          .then(() => console.log(`Successfully sent license email to ${row.email}`))
+          .catch(emailErr => console.error(`Failed to send license email for order ${orderId}:`, emailErr));
+      } else {
+        console.error(`Could not find email for order ${orderId} to send license.`);
       }
     });
 
     res.status(200).json({ message: "License status updated successfully" });
   });
 });
-
 
 // ---- For Test ----
 app.get("/api/paypal/orders", (req, res) => {
@@ -271,6 +333,21 @@ app.get("/api/paypal/orders", (req, res) => {
       return res.status(500).json({ error: "Failed to fetch orders." });
     }
     res.json(rows);
+  });
+});
+
+app.get("/api/paypal/orders/:orderId/status", (req, res) => {
+  const { orderId } = req.params;
+  db.get("SELECT status, licenseStatus FROM orders WHERE orderId = ?", [orderId], (err, row) => {
+    if (err) {
+      console.error(`Error fetching status for order ${orderId}:`, err);
+      return res.status(500).json({ error: "Failed to fetch order status." });
+    }
+    if (row) {
+      res.json({ status: row.status, licenseStatus: row.licenseStatus });
+    } else {
+      res.status(404).json({ error: "Order not found." });
+    }
   });
 });
 
@@ -291,7 +368,8 @@ app.get("/api/paypal/orders/:orderId", (req, res) => {
 
 app.get("/api/mailer/test", async (req, res) => {
   try {
-    await mailer.sendEmail("sanganhhungtuoitre123@gmail.com", "Test Email", "<h1>This is a test email</h1>");
+    const emailContent = mailer.getLicenseEmailTemplate("CAN-abcc1234-xyz7890");
+    await mailer.sendEmail("sanganhhungtuoitre123@gmail.com", "Test Email", emailContent);
     res.json({ message: "Test email sent successfully." });
     console.log("Test email sent successfully.");
   } catch (error) {

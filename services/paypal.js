@@ -46,8 +46,8 @@ exports.createOrder = async function(email) {
             }
         ],
         application_context: {
-            return_url: process.env.BASE_URL + "/paypal/approve",
-            cancel_url: process.env.BASE_URL + "/paypal/cancel-order",
+            return_url: process.env.BASE_URL + "/api/paypal/approve",
+            cancel_url: process.env.BASE_URL + "/api/paypal/cancel-order",
             shipping_preference: "NO_SHIPPING",
             user_action: "PAY_NOW",
             brand_name: "CAN Analyzer Home Page"
@@ -115,3 +115,52 @@ exports.capturePayment = async function(orderId) {
         return null;
     }
 }
+
+/**
+ * Verify PayPal webhook signature.
+ * @param {object} params
+ * @param {object} params.headers - req.headers
+ * @param {object} params.event - parsed JSON event object
+ * @param {Buffer|string} params.rawBody - raw request body
+ */
+exports.verifyWebhookSignature = async function ({ headers, event, rawBody }) {
+  const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+  if (!webhookId) {
+    throw new Error("Missing PAYPAL_WEBHOOK_ID");
+  }
+
+  const authAlgo = headers["paypal-auth-algo"];
+  const certUrl = headers["paypal-cert-url"];
+  const transmissionId = headers["paypal-transmission-id"];
+  const transmissionSig = headers["paypal-transmission-sig"];
+  const transmissionTime = headers["paypal-transmission-time"];
+
+  if (!authAlgo || !certUrl || !transmissionId || !transmissionSig || !transmissionTime) {
+    return { verified: false, reason: "Missing PayPal signature headers" };
+  }
+
+  const accessToken = await generateAccessToken();
+
+  const requestBody = {
+    auth_algo: authAlgo,
+    cert_url: certUrl,
+    transmission_id: transmissionId,
+    transmission_sig: transmissionSig,
+    transmission_time: transmissionTime,
+    webhook_id: webhookId,
+    webhook_event: event,
+  };
+
+  const resp = await axios({
+    url: process.env.PAYPAL_BASE_URL + "/v1/notifications/verify-webhook-signature",
+    method: "post",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: requestBody,
+  });
+
+  const status = resp.data?.verification_status; // "VERIFIED" | "FAILED"
+  return { verified: status === "VERIFIED", status };
+};
