@@ -27,7 +27,7 @@ app.get("/", (req, res) => {
 });
 
 // ------------------------ PayPal routes ------------------------
-app.get("/api/paypal/approve", async (req, res) => {
+app.get("/paypal/approve", async (req, res) => {
   try {
     const { token: orderId } = req.query;
     if (!orderId) {
@@ -110,17 +110,33 @@ app.get("/api/paypal/approve", async (req, res) => {
 });
 
 app.get("/api/paypal/cancel-order", (req, res) => {
-  // const { token: orderId } = req.query;
-  // if (orderId) {
-  //   db.run("DELETE FROM orders WHERE orderId = ?", [orderId], (err) => {
-  //     if (err) {
-  //       console.error(`Error deleting canceled order ${orderId}:`, err);
-  //     } else {
-  //       console.log(`Order ${orderId} canceled and deleted from DB.`);
-  //     }
-  //   });
-  // }
-  res.redirect("/");
+  const { token: orderId } = req.query;
+  if (orderId) {
+    db.get("SELECT status FROM orders WHERE orderId = ?", [orderId], (err, row) => {
+      if (err) {
+        console.error(`Error fetching status for canceled order ${orderId}:`, err);
+        return res.redirect("/");
+      }
+
+      // Only delete the order if it was just created and not yet processed
+      if (row && row.status === 'CREATED') {
+        db.run("DELETE FROM orders WHERE orderId = ?", [orderId], (deleteErr) => {
+          if (deleteErr) {
+            console.error(`Error deleting canceled order ${orderId}:`, deleteErr);
+          } else {
+            console.log(`Order ${orderId} with status CREATED was canceled and deleted from DB.`);
+          }
+        });
+      } else if (row) {
+        console.log(`Order ${orderId} with status ${row.status} was canceled but not deleted.`);
+        // Optionally update status to CANCELED if needed
+        // db.run("UPDATE orders SET status = ? WHERE orderId = ?", ["CANCELED", orderId]);
+      }
+      res.redirect("/");
+    });
+  } else {
+    res.redirect("/");
+  }
 });
 
 app.get("/api/paypal/pay", async (req, res) => {
