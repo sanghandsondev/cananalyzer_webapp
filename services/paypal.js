@@ -161,6 +161,6 @@ exports.verifyWebhookSignature = async function ({ headers, event, rawBody }) {
     data: requestBody,
   });
 
-  const status = resp.data?.verification_status; // "VERIFIED" | "FAILED"
-  return { verified: status === "VERIFIED", status };
+  const status = resp.data?.verification_status; // "SUCCESS" | "FAILED"
+  return { verified: status === "SUCCESS", status };
 };
