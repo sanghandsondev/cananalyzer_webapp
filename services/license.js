@@ -3,7 +3,7 @@ const axios = require("axios");
 exports.createLicense = async function(orderId) {
     try {
         const response = await axios({
-            url: process.env.LICENSE_SERVICE_URL + "/api/create-license",
+            url: process.env.LICENSE_SERVICE_URL + "/default/License_Generate_Func",
             method: "post",
             headers: {
                 "Content-Type": "application/json",
@@ -16,6 +16,7 @@ exports.createLicense = async function(orderId) {
 
         return response.data;
     } catch (error) {
+        console.error(error)
         console.error("Error creating license:", error.response ? error.response.data : error.message);
         return null;
     }
