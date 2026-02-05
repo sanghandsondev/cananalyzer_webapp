@@ -1,30 +1,103 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CAN Analyzer WebApp</title>
+    <title>CAN Analyzer</title>
+    <link rel="icon" href="/assets/favicons/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/favicons/favicon.png" />
     <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/index.css" />
+
+    <!-- Font Awesome (classic) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      referrerpolicy="no-referrer"
+    />
   </head>
   <body>
-    <h1>CAN Analyzer</h1>
-    <p>WebApp for CAN bus analysis.</p>
+    <!-- Sticky Header -->
+    <header class="site-header" role="banner">
+      <div class="site-header__container">
+        <a class="brand" href="/" aria-label="CAN Analyzer home">
+          <span class="brand__mark" aria-hidden="true">
+            <img class="brand__logo" src="/assets/brand/logo-gear.png" alt="" />
+          </span>
+          <span class="brand__text">CAN Analyzer</span>
+        </a>
+
+        <nav class="site-nav site-nav--center" aria-label="Primary">
+          <!-- Products dropdown -->
+          <div class="nav-dd" data-nav-dd>
+            <button
+              class="site-nav__link nav-dd__toggle"
+              type="button"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              Products <i class="fa-solid fa-chevron-down site-nav__caret" aria-hidden="true"></i>
+            </button>
+
+            <div class="nav-dd__menu" role="menu" aria-label="Products">
+              <a class="nav-dd__item" role="menuitem" href="/products/cananalyzer">
+                <span class="nav-dd__icon" aria-hidden="true"><i class="fa-solid fa-microchip"></i></span>
+                <span class="nav-dd__text">
+                  <span class="nav-dd__title">CAN Analyzer</span>
+                  <span class="nav-dd__desc">Decode, filter, log &amp; export CAN bus</span>
+                </span>
+              </a>
+
+              <a class="nav-dd__item" role="menuitem" href="/products/cbcmsimulator">
+                <span class="nav-dd__icon" aria-hidden="true"><i class="fa-solid fa-car"></i></span>
+                <span class="nav-dd__text">
+                  <span class="nav-dd__title">CBCM Simulator</span>
+                  <span class="nav-dd__desc">Mô phỏng CBCM cho kiểm thử &amp; phát triển</span>
+                </span>
+              </a>
+            </div>
+          </div>
+
+          <a class="site-nav__link" href="#pricing">Pricing</a>
+          <a class="site-nav__link" href="#downloads">Downloads</a>
+          <a class="site-nav__link" href="#about">About</a>
+          <a class="site-nav__link" href="#support">Support</a>
+        </nav>
+
+        <!-- Right side placeholder to keep centered nav aligned like the reference header -->
+        <div class="site-header__right" aria-hidden="true"></div>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <h1 class="sr-only">CAN Analyzer</h1>
+    <p class="sr-only">Web app for CAN bus analysis.</p>
 
     <main class="page">
       <div class="page__container">
-        <section class="pricing-card" aria-label="Licence pricing">
-          <h2 class="pricing-card__title">Licence</h2>
-          <p class="pricing-card__subtitle">Gói sử dụng cho khách hàng</p>
+        <!-- Products -->
+        <section id="products" class="info-card" aria-label="Products">
+          <h2 class="info-card__title">Products</h2>
+          <p class="info-card__subtitle">Desktop CAN tools</p>
+          <p class="info-card__text">
+            A CAN bus analysis tool with decode, filtering, logging, and export.
+          </p>
+        </section>
+
+        <!-- Pricing (existing pricing card) -->
+        <section id="pricing" class="pricing-card" aria-label="License pricing">
+          <h2 class="pricing-card__title">License</h2>
+          <p class="pricing-card__subtitle">Plans for customers</p>
 
           <div class="price">
             <span class="price__amount">$1</span>
-            <span class="price__period">/ năm</span>
+            <span class="price__period">/ year</span>
           </div>
 
           <ul class="features" aria-label="Features">
-            <li>Truy cập đầy đủ tính năng phân tích CAN</li>
-            <li>Cập nhật định kỳ</li>
-            <li>Hỗ trợ cơ bản</li>
+            <li>Full access to CAN analysis features</li>
+            <li>Regular updates</li>
+            <li>Basic support</li>
           </ul>
 
           <button id="buyNowBtn" type="button" class="btn btn--primary">
@@ -32,9 +105,10 @@
           </button>
         </section>
 
-        <section class="downloads-card" aria-label="Downloads">
+        <!-- Downloads (existing downloads card) -->
+        <section id="downloads" class="downloads-card" aria-label="Downloads">
           <h2 class="downloads-card__title">Downloads</h2>
-          <p class="downloads-card__subtitle">Tải xuống ứng dụng cho hệ điều hành của bạn</p>
+          <p class="downloads-card__subtitle">Download the app for your OS</p>
           <ul class="download-links">
             <li>
               <a href="/downloads/windows_x64/can-analyzer-windows-x64-1.0.0.zip" class="btn-download" download>
@@ -50,6 +124,24 @@
             </li>
           </ul>
         </section>
+
+        <!-- About -->
+        <section id="about" class="info-card" aria-label="About">
+          <h2 class="info-card__title">About</h2>
+          <p class="info-card__subtitle">About CAN Analyzer</p>
+          <p class="info-card__text">
+            Focused on fast, stable, and easy-to-use workflows for embedded/automotive engineers.
+          </p>
+        </section>
+
+        <!-- Support -->
+        <section id="support" class="info-card" aria-label="Support">
+          <h2 class="info-card__title">Support</h2>
+          <p class="info-card__subtitle">Help &amp; support</p>
+          <p class="info-card__text">
+            Contact us via email. (You can replace this with a form/ticketing system later.)
+          </p>
+        </section>
       </div>
     </main>
 
@@ -59,20 +151,20 @@
 
       <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
         <div class="modal__header">
-          <h3 id="paymentModalTitle" class="modal__title">Chọn phương thức thanh toán</h3>
-          <button type="button" class="modal__close" aria-label="Đóng" data-close="true">×</button>
+          <h3 id="paymentModalTitle" class="modal__title">Choose a payment method</h3>
+          <button type="button" class="modal__close" aria-label="Close" data-close="true">×</button>
         </div>
 
         <div class="modal__body">
           <form id="paymentForm" novalidate>
             <div class="form-group">
               <label for="emailInput">Email</label>
-              <input type="email" id="emailInput" name="email" class="form-control" placeholder="Nhập email của bạn" required />
-              <small class="form-hint">Hãy chắc chắn rằng bạn nhập email chính xác.</small>
+              <input type="email" id="emailInput" name="email" class="form-control" placeholder="Enter your email" required />
+              <small class="form-hint">Make sure you enter the correct email address.</small>
               <div id="emailError" class="form-error" aria-live="polite"></div>
             </div>
 
-            <p class="modal__hint">Chọn phương thức thanh toán:</p>
+            <p class="modal__hint">Select a payment method:</p>
             <div class="payment-options">
               <div class="payment-option">
                 <input type="radio" id="paypal" name="paymentMethod" value="paypal" required>
@@ -90,7 +182,7 @@
 
             <div class="modal__footer">
               <button id="submitPaymentBtn" type="submit" class="btn btn--primary" disabled>
-                Thanh toán
+                Pay
               </button>
             </div>
           </form>

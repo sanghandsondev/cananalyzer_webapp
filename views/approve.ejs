@@ -1,24 +1,27 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kết quả thanh toán - CAN Analyzer</title>
+    <title>CAN Analyzer</title>
+    <link rel="icon" href="/assets/favicons/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/favicons/favicon.png" />
     <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/approve.css" />
   </head>
   <body>
     <div id="resultContainer" class="result-container" data-order-id="<%= orderId %>" data-status="<%= status %>">
       <% if (status === 'COMPLETED') { %>
-        <h1 id="statusTitle" class="result-title--success">Thanh toán thành công!</h1>
+        <h1 id="statusTitle" class="result-title--success">Payment successful!</h1>
       <% } else if (status === 'PENDING') { %>
-        <h1 id="statusTitle" class="result-title--pending">Thanh toán đang chờ xử lý</h1>
+        <h1 id="statusTitle" class="result-title--pending">Payment pending</h1>
       <% } else { %>
-        <h1 id="statusTitle" class="result-title--fail">Thanh toán thất bại</h1>
+        <h1 id="statusTitle" class="result-title--fail">Payment failed</h1>
       <% } %>
       
       <p id="statusMessage" class="result-message"><%= message %></p>
       
-      <a href="/" class="btn-home">Trở về Trang chủ</a>
+      <a href="/" class="btn-home">Back to Home</a>
     </div>
 
     <script src="/js/approve.js"></script>

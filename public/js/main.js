@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (emailInput.value === '') {
       emailError.textContent = '';
     } else if (!validateEmail(emailInput.value)) {
-      emailError.textContent = 'Vui lòng nhập một địa chỉ email hợp lệ.';
+      emailError.textContent = 'Please enter a valid email address.';
     } else {
       emailError.textContent = '';
     }
@@ -87,5 +87,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial state check
   updateSubmitButtonState();
+
+  // Products dropdown (header)
+  const dropdowns = Array.from(document.querySelectorAll('[data-nav-dd]'));
+
+  const closeAllDropdowns = () => {
+    dropdowns.forEach((dd) => {
+      dd.classList.remove('is-open');
+      const btn = dd.querySelector('.nav-dd__toggle');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+  };
+
+  dropdowns.forEach((dd) => {
+    const btn = dd.querySelector('.nav-dd__toggle');
+    if (!btn) return;
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isOpen = dd.classList.contains('is-open');
+      closeAllDropdowns();
+      if (!isOpen) {
+        dd.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-nav-dd]')) return;
+    closeAllDropdowns();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAllDropdowns();
+  });
 });
 

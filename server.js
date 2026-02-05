@@ -27,6 +27,14 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "index.html"));
 });
 
+app.get("/products/cananalyzer", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "products", "cananalyzer.html"));
+});
+
+app.get("/products/cbcmsimulator", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "products", "cbcmsimulator.html"));
+});
+
 // ------------------------ PayPal routes ------------------------
 app.get("/paypal/approve", async (req, res) => {
   try {
