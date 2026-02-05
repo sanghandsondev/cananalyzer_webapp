@@ -12,7 +12,7 @@
 .site-header__container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 12px 28px;
+  padding: 8px 28px;
   display: flex;
   align-items: center;
   gap: 18px;
@@ -22,7 +22,7 @@
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px; /* was 12px */
   text-decoration: none;
   color: #1f6feb;
   font-weight: 700; /* was 900 */
@@ -30,8 +30,8 @@
 }
 
 .brand__mark {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 12px;
   display: grid;
   place-items: center;
@@ -42,15 +42,16 @@
 }
 
 .brand__logo {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   display: block;
 }
 
 .brand__text {
-  font-size: 22px; /* was 20 */
-  line-height: 1.25; /* taller */
+  font-size: 24px;          /* was 22px */
+  line-height: 1.1;         /* was 1.25 */
+  letter-spacing: -0.03em;  /* tighter characters */
 }
 
 .site-nav {
@@ -73,18 +74,21 @@
 .site-nav__link {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   color: rgba(17, 24, 39, 0.84); /* was rgba(17, 24, 39, 0.78) */
   text-decoration: none;
   font-weight: 600; /* was 650 */
   font-size: 17px; /* was 16 */
   line-height: 1.25;
-  padding: 10px 10px;
-  border-radius: 10px;
+  padding-left: 14px; /* ensure left padding matches right */
+  padding-right: 14px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border-radius: 6px;
 }
 
 .site-nav__link:hover {
-  background: rgba(17, 24, 39, 0.06);
+  background: transparent;
   color: #1f6feb;
 }
 
@@ -116,6 +120,8 @@
   -webkit-appearance: none;
   appearance: none;
   font-size: 17px; /* was 17px (from .site-nav__link) */
+  padding: 12px 14px;
+  cursor: pointer;
 }
 
 /* keep caret color consistent too */
