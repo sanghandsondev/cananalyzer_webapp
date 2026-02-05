@@ -16,7 +16,6 @@ exports.createLicense = async function(orderId) {
 
         return response.data;
     } catch (error) {
-        console.error(error)
         console.error("Error creating license:", error.response ? error.response.data : error.message);
         return null;
     }

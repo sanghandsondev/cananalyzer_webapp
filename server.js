@@ -5,6 +5,7 @@ const paypal = require("./services/paypal");
 const db = require("./services/db");
 const license = require("./services/license");
 const mailer = require("./services/mailer");
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -341,7 +342,7 @@ app.post("/api/license/notify", (req, res) => {
   });
 });
 
-// ---- For Test ----
+// ------------------------ API routes for Audit Order Info ------------------------
 app.get("/api/paypal/orders", (req, res) => {
   db.all("SELECT * FROM orders", [], (err, rows) => {
     if (err) {
@@ -382,16 +383,29 @@ app.get("/api/paypal/orders/:orderId", (req, res) => {
   });
 });
 
-app.get("/api/mailer/test", async (req, res) => {
-  try {
-    const emailContent = mailer.getLicenseEmailTemplate("CAN-abcc1234-xyz7890");
-    await mailer.sendEmail("sanganhhungtuoitre123@gmail.com", "Test Email", emailContent);
-    res.json({ message: "Test email sent successfully." });
-    console.log("Test email sent successfully.");
-  } catch (error) {
-    console.error("Error sending test email:", error);
-    res.status(500).json({ error: "Failed to send test email." });
-  }
+// ------------------------ API routes for Mock ------------------------
+
+app.post("/default/License_Generate_Func", async (req, res) => {
+  const { orderId } = req.body;
+  console.log(`Mock License Service: Received license creation request for order ${orderId}`);
+  
+  // Simulate license key generation
+  const licenseKey = `CAN-${Math.random().toString(36).substring(2, 10).toUpperCase()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
+  // Simulate async operation
+  setTimeout(() => {
+    console.log(`Mock License Service: Created license ${licenseKey} for order ${orderId}`);
+    axios.post(process.env.BASE_URL + '/api/license/notify', {
+      orderId,
+      licenseKey
+    }).then(() => {
+      console.log(`Mock License Service: Notified main server about license for order ${orderId}`);
+    }).catch(err => {
+      console.error(`Mock License Service: Failed to notify main server for order ${orderId}:`, err.message);
+    });
+  }, 1000);
+
+  res.sendStatus(200);
 });
 
 // ------------------------ Start the server ------------------------
