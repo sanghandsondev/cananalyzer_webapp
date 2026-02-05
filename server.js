@@ -57,48 +57,49 @@ app.get("/paypal/approve", async (req, res) => {
           payerCountryCode: payer.address.country_code
         };
 
-        db.run(
-          `UPDATE orders SET 
-            status = ?, 
-            payerId = ?, 
-            payerEmail = ?, 
-            payerGivenName = ?, 
-            payerSurname = ?, 
-            payerCountryCode = ? 
-          WHERE orderId = ?`,
-          ["COMPLETED", payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId],
-          (err) => {
-            if (err) console.error(`Error updating payer info for order ${orderId}:`, err);
-          }
-        );
+        try {
+          await db.query(
+            `UPDATE orders SET 
+              status = $1, 
+              payerId = $2, 
+              payerEmail = $3, 
+              payerGivenName = $4, 
+              payerSurname = $5, 
+              payerCountryCode = $6 
+            WHERE orderId = $7`,
+            ["COMPLETED", payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId]
+          );
+        } catch (err) {
+          console.error(`Error updating payer info for order ${orderId}:`, err);
+        }
         
         // Trigger license creation only if not already created
-        db.get("SELECT email, licenseStatus FROM orders WHERE orderId = ?", [orderId], (err, row) => {
-          if (row && row.licenseStatus === 'NOT_CREATED') {
-            // POST API to create License here (include: email, orderId, etc)
-            db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["REQUEST_CREATED", orderId]);
-            
-            license.createLicense(orderId).then(licenseResult => {
-              if (licenseResult) {
-                console.log(`Successfully requested license creation for order ${orderId}`);
-              } else {
-                console.error(`Failed to request license creation for order ${orderId}`);
-                // Optionally, revert licenseStatus or add a retry mechanism
-                db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["CREATION_FAILED", orderId]);
-              }
-            });
-          }
-        });
+        const { rows } = await db.query("SELECT email, licenseStatus FROM orders WHERE orderId = $1", [orderId]);
+        const row = rows[0];
+        if (row && row.licensestatus === 'NOT_CREATED') {
+          // POST API to create License here (include: email, orderId, etc)
+          await db.query("UPDATE orders SET licenseStatus = $1 WHERE orderId = $2", ["REQUEST_CREATED", orderId]);
+          
+          license.createLicense(orderId).then(async licenseResult => {
+            if (licenseResult) {
+              console.log(`Successfully requested license creation for order ${orderId}`);
+            } else {
+              console.error(`Failed to request license creation for order ${orderId}`);
+              // Optionally, revert licenseStatus or add a retry mechanism
+              await db.query("UPDATE orders SET licenseStatus = $1 WHERE orderId = $2", ["CREATION_FAILED", orderId]);
+            }
+          });
+        }
 
       } else if (captureData.status === "PAYER_ACTION_REQUIRED" || captureData.status === "PENDING") {
         status = "PENDING";
         message = "Thanh toán của bạn đang chờ xử lý. Chúng tôi sẽ thông báo cho bạn khi hoàn tất.";
-        db.run("UPDATE orders SET status = ? WHERE orderId = ?", ["PENDING", orderId]);
+        await db.query("UPDATE orders SET status = $1 WHERE orderId = $2", ["PENDING", orderId]);
       }
     }
 
     if (status === "FAILED") {
-        db.run("UPDATE orders SET status = ? WHERE orderId = ?", ["FAILED", orderId]);
+        await db.query("UPDATE orders SET status = $1 WHERE orderId = $2", ["FAILED", orderId]);
     }
 
     // 3. Render the approval page with the status and orderId
@@ -110,34 +111,27 @@ app.get("/paypal/approve", async (req, res) => {
   }
 });
 
-app.get("/api/paypal/cancel-order", (req, res) => {
+app.get("/api/paypal/cancel-order", async (req, res) => {
   const { token: orderId } = req.query;
   if (orderId) {
-    db.get("SELECT status FROM orders WHERE orderId = ?", [orderId], (err, row) => {
-      if (err) {
-        console.error(`Error fetching status for canceled order ${orderId}:`, err);
-        return res.redirect("/");
-      }
+    try {
+      const { rows } = await db.query("SELECT status FROM orders WHERE orderId = $1", [orderId]);
+      const row = rows[0];
 
       // Only delete the order if it was just created and not yet processed
       if (row && row.status === 'CREATED') {
-        db.run("DELETE FROM orders WHERE orderId = ?", [orderId], (deleteErr) => {
-          if (deleteErr) {
-            console.error(`Error deleting canceled order ${orderId}:`, deleteErr);
-          } else {
-            console.log(`Order ${orderId} with status CREATED was canceled and deleted from DB.`);
-          }
-        });
+        await db.query("DELETE FROM orders WHERE orderId = $1", [orderId]);
+        console.log(`Order ${orderId} with status CREATED was canceled and deleted from DB.`);
       } else if (row) {
         console.log(`Order ${orderId} with status ${row.status} was canceled but not deleted.`);
         // Optionally update status to CANCELED if needed
-        // db.run("UPDATE orders SET status = ? WHERE orderId = ?", ["CANCELED", orderId]);
+        // await db.query("UPDATE orders SET status = $1 WHERE orderId = $2", ["CANCELED", orderId]);
       }
-      res.redirect("/");
-    });
-  } else {
-    res.redirect("/");
+    } catch (err) {
+      console.error(`Error processing canceled order ${orderId}:`, err);
+    }
   }
+  res.redirect("/");
 });
 
 app.get("/api/paypal/pay", async (req, res) => {
@@ -151,17 +145,16 @@ app.get("/api/paypal/pay", async (req, res) => {
 
     if (orderDetails && orderDetails.approveUrl) {
       // Save order to DB
-      db.run(
-        "INSERT INTO orders (orderId, email, status) VALUES (?, ?, ?)",
-        [orderDetails.orderId, email, "CREATED"],
-        (err) => {
-          if (err) {
-            console.error("Error saving order to DB:", err);
-            return res.status(500).send("An error occurred while processing your payment.");
-          }
-          res.redirect(orderDetails.approveUrl);
-        }
-      );
+      try {
+        await db.query(
+          "INSERT INTO orders (orderId, email, status) VALUES ($1, $2, $3)",
+          [orderDetails.orderId, email, "CREATED"]
+        );
+        res.redirect(orderDetails.approveUrl);
+      } catch (err) {
+        console.error("Error saving order to DB:", err);
+        return res.status(500).send("An error occurred while processing your payment.");
+      }
     } else {
       res.status(500).send("An error occurred while creating the PayPal order.");
     }
@@ -221,13 +214,13 @@ app.post("/api/paypal/webhook", express.raw({ type: 'application/json' }), async
 
   // 3. Store webhook data for auditing
   const { event_type, resource_type, resource_version, summary } = webhookEvent;
-  db.run(
+  await db.query(
     `UPDATE orders SET 
-      webhookEventType = ?, 
-      webhookResourceType = ?, 
-      webhookResourceVersion = ?, 
-      webhookSummary = ? 
-    WHERE orderId = ?`, 
+      webhookEventType = $1, 
+      webhookResourceType = $2, 
+      webhookResourceVersion = $3, 
+      webhookSummary = $4 
+    WHERE orderId = $5`, 
     [event_type, resource_type, resource_version, summary, orderId]
   );
 
@@ -235,19 +228,17 @@ app.post("/api/paypal/webhook", express.raw({ type: 'application/json' }), async
   if (eventType === "PAYMENT.CAPTURE.COMPLETED") {
     console.log(`Webhook received: Order ${orderId} payment completed.`);
 
-    db.get("SELECT email, licenseStatus, payerId FROM orders WHERE orderId = ?", [orderId], (err, row) => {
-      if (err) {
-        console.error(`Webhook: DB error checking license status for order ${orderId}`, err);
-        return;
-      }
+    try {
+      const { rows } = await db.query("SELECT email, licenseStatus, payerId FROM orders WHERE orderId = $1", [orderId]);
+      let row = rows[0];
 
       if (!row) {
         console.warn(`Webhook: Order ${orderId} not found in DB.`);
-        return;
+        return res.sendStatus(200); // Acknowledge and stop
       }
 
       // If payer info hasn't been saved yet (e.g., user didn't return to /approve), save it now.
-      if (!row.payerId && webhookEvent.resource?.payer) {
+      if (!row.payerid && webhookEvent.resource?.payer) {
         const payer = webhookEvent.resource.payer;
         const payerInfo = {
           payerId: payer.payer_id,
@@ -258,49 +249,43 @@ app.post("/api/paypal/webhook", express.raw({ type: 'application/json' }), async
         };
 
         console.log(`Webhook: Saving payer info for order ${orderId}`);
-        db.run(
+        await db.query(
           `UPDATE orders SET 
-            payerId = ?, payerEmail = ?, payerGivenName = ?, payerSurname = ?, payerCountryCode = ?
-          WHERE orderId = ?`,
-          [payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId],
-          (err) => {
-            if (err) console.error(`Webhook: Error updating payer info for order ${orderId}:`, err);
-          }
+            payerId = $1, payerEmail = $2, payerGivenName = $3, payerSurname = $4, payerCountryCode = $5
+          WHERE orderId = $6`,
+          [payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId]
         );
       }
 
-      if (row.licenseStatus === 'NOT_CREATED') {
-        db.run("UPDATE orders SET status = ? WHERE orderId = ?", ["COMPLETED", orderId], function(err) {
-          if(err) {
-            console.error(`Webhook: Error updating status for order ${orderId}`, err);
-            return;
-          }
+      if (row.licensestatus === 'NOT_CREATED') {
+        await db.query("UPDATE orders SET status = $1 WHERE orderId = $2", ["COMPLETED", orderId]);
 
-          if (row.email) {
-            db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["REQUEST_CREATED", orderId]);
-            console.log(`TODO from Webhook: Create license for ${row.email} for order ${orderId}`);
-            license.createLicense(orderId).then(licenseResult => {
-              if (licenseResult) {
-                console.log(`Webhook: Successfully requested license creation for order ${orderId}`);
-              } else {
-                console.error(`Webhook: Failed to request license creation for order ${orderId}`);
-                db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["CREATION_FAILED", orderId]);
-              }
-            });
-          } else {
-            console.error(`Webhook: Could not find order ${orderId} to create license.`);
-          }
-        });
+        if (row.email) {
+          await db.query("UPDATE orders SET licenseStatus = $1 WHERE orderId = $2", ["REQUEST_CREATED", orderId]);
+          console.log(`TODO from Webhook: Create license for ${row.email} for order ${orderId}`);
+          license.createLicense(orderId).then(async licenseResult => {
+            if (licenseResult) {
+              console.log(`Webhook: Successfully requested license creation for order ${orderId}`);
+            } else {
+              console.error(`Webhook: Failed to request license creation for order ${orderId}`);
+              await db.query("UPDATE orders SET licenseStatus = $1 WHERE orderId = $2", ["CREATION_FAILED", orderId]);
+            }
+          });
+        } else {
+          console.error(`Webhook: Could not find email for order ${orderId} to create license.`);
+        }
       } else {
-        console.log(`Webhook: License for order ${orderId} already requested or created (status: ${row.licenseStatus}). Ignoring webhook.`);
+        console.log(`Webhook: License for order ${orderId} already requested or created (status: ${row.licensestatus}). Ignoring webhook.`);
       }
-    });
+    } catch (err) {
+      console.error(`Webhook: DB error processing order ${orderId}`, err);
+    }
   }
   res.sendStatus(200); // Respond to PayPal to acknowledge receipt
 });
 
 // ------------------------ License Service routes ------------------------
-app.post("/api/license/notify", (req, res) => {
+app.post("/api/license/notify", async (req, res) => {
   const { orderId, licenseKey } = req.body;
 
   if (!orderId || !licenseKey) {
@@ -309,78 +294,78 @@ app.post("/api/license/notify", (req, res) => {
 
   console.log(`Received license key for order ${orderId}`);
 
-  // Update license status in DB
-  db.run("UPDATE orders SET licenseStatus = ? WHERE orderId = ?", ["CREATED", orderId], function(err) {
-    if (err) {
-      console.error(`Error updating license status for order ${orderId}:`, err);
-      return res.status(500).json({ error: "Database error" });
-    }
-    if (this.changes === 0) {
+  try {
+    // Update license status in DB
+    const updateResult = await db.query("UPDATE orders SET licenseStatus = $1 WHERE orderId = $2", ["CREATED", orderId]);
+
+    if (updateResult.rowCount === 0) {
       console.warn(`License notification: Order ${orderId} not found.`);
       return res.status(404).json({ error: "Order not found" });
     }
 
     // Send the license key to the user's email
-    db.get("SELECT email FROM orders WHERE orderId = ?", [orderId], (err, row) => {
-      if (err) {
-        console.error(`Error fetching email for order ${orderId}:`, err);
-        return;
-      }
-      if (row && row.email) {
-        console.log(`Sending license ${licenseKey} to ${row.email} for order ${orderId}`);
-        const emailSubject = "Your CAN Analyzer License Key";
-        const emailContent = mailer.getLicenseEmailTemplate(licenseKey);
-        mailer.sendEmail(row.email, emailSubject, emailContent)
-          .then(() => console.log(`Successfully sent license email to ${row.email}`))
-          .catch(emailErr => console.error(`Failed to send license email for order ${orderId}:`, emailErr));
-      } else {
-        console.error(`Could not find email for order ${orderId} to send license.`);
-      }
-    });
+    const { rows } = await db.query("SELECT email FROM orders WHERE orderId = $1", [orderId]);
+    const row = rows[0];
+
+    if (row && row.email) {
+      console.log(`Sending license ${licenseKey} to ${row.email} for order ${orderId}`);
+      const emailSubject = "Your CAN Analyzer License Key";
+      const emailContent = mailer.getLicenseEmailTemplate(licenseKey);
+      mailer.sendEmail(row.email, emailSubject, emailContent)
+        .then(() => console.log(`Successfully sent license email to ${row.email}`))
+        .catch(emailErr => console.error(`Failed to send license email for order ${orderId}:`, emailErr));
+    } else {
+      console.error(`Could not find email for order ${orderId} to send license.`);
+    }
 
     res.status(200).json({ message: "License status updated successfully" });
-  });
+  } catch (err) {
+    console.error(`Error processing license notification for order ${orderId}:`, err);
+    return res.status(500).json({ error: "Database error" });
+  }
 });
 
 // ------------------------ API routes for Audit Order Info ------------------------
-app.get("/api/paypal/orders", (req, res) => {
-  db.all("SELECT * FROM orders", [], (err, rows) => {
-    if (err) {
-      console.error("Error fetching orders from DB:", err);
-      return res.status(500).json({ error: "Failed to fetch orders." });
-    }
+app.get("/api/paypal/orders", async (req, res) => {
+  try {
+    const { rows } = await db.query("SELECT * FROM orders ORDER BY createdAt DESC");
     res.json(rows);
-  });
+  } catch (err) {
+    console.error("Error fetching orders from DB:", err);
+    return res.status(500).json({ error: "Failed to fetch orders." });
+  }
 });
 
-app.get("/api/paypal/orders/:orderId/status", (req, res) => {
+app.get("/api/paypal/orders/:orderId/status", async (req, res) => {
   const { orderId } = req.params;
-  db.get("SELECT status, licenseStatus FROM orders WHERE orderId = ?", [orderId], (err, row) => {
-    if (err) {
-      console.error(`Error fetching status for order ${orderId}:`, err);
-      return res.status(500).json({ error: "Failed to fetch order status." });
-    }
+  try {
+    const { rows } = await db.query("SELECT status, licenseStatus FROM orders WHERE orderId = $1", [orderId]);
+    const row = rows[0];
     if (row) {
-      res.json({ status: row.status, licenseStatus: row.licenseStatus });
+      res.json({ status: row.status, licenseStatus: row.licensestatus });
     } else {
       res.status(404).json({ error: "Order not found." });
     }
-  });
+  } catch (err) {
+    console.error(`Error fetching status for order ${orderId}:`, err);
+    return res.status(500).json({ error: "Failed to fetch order status." });
+  }
 });
 
-app.get("/api/paypal/orders/:orderId", (req, res) => {
+app.get("/api/paypal/orders/:orderId", async (req, res) => {
   const { orderId } = req.params;
-  db.get("SELECT * FROM orders WHERE orderId = ?", [orderId], (err, row) => {
-    if (err) {
-      console.error(`Error fetching order ${orderId} from DB:`, err);
-      return res.status(500).json({ error: "Failed to fetch order." });
-    }
+  try {
+    const { rows } = await db.query("SELECT * FROM orders WHERE orderId = $1", [orderId]);
+    const row = rows[0];
     if (row) {
       res.json(row);
     } else {
       res.status(404).json({ error: "Order not found." });
     }
-  });
+  } catch (err) {
+    console.error(`Error fetching order ${orderId} from DB:`, err);
+    return res.status(500).json({ error: "Failed to fetch order." });
+  }
 });
 
 // ------------------------ API routes for Mock ------------------------
@@ -409,6 +394,11 @@ app.post("/default/License_Generate_Func", async (req, res) => {
 });
 
 // ------------------------ Start the server ------------------------
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+const startServer = async () => {
+  await db.initializeDatabase();
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+};
+
+startServer();

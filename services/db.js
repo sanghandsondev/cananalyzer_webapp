@@ -1,36 +1,45 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 
-const dbPath = path.resolve(__dirname, '..', 'database.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error opening database', err.message);
-  } else {
-    console.log('Connected to the SQLite database.');
-    db.run(`CREATE TABLE IF NOT EXISTS orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      orderId TEXT UNIQUE,
-      email TEXT,
-      status TEXT,
-      payerId TEXT,
-      payerEmail TEXT,
-      payerGivenName TEXT,
-      payerSurname TEXT,
-      payerCountryCode TEXT,
-      webhookEventType TEXT,
-      webhookResourceType TEXT,
-      webhookResourceVersion TEXT,
-      webhookSummary TEXT,
-      licenseStatus TEXT DEFAULT 'NOT_CREATED',
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
-      if (err) {
-        console.error('Error creating table "orders"', err.message);
-      } else {
-        console.log('Table "orders" is already.');
-      }
-    });
-  }
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
-module.exports = db;
+const initializeDatabase = async () => {
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        orderId TEXT UNIQUE,
+        email TEXT,
+        status TEXT,
+        payerId TEXT,
+        payerEmail TEXT,
+        payerGivenName TEXT,
+        payerSurname TEXT,
+        payerCountryCode TEXT,
+        webhookEventType TEXT,
+        webhookResourceType TEXT,
+        webhookResourceVersion TEXT,
+        webhookSummary TEXT,
+        licenseStatus TEXT DEFAULT 'NOT_CREATED',
+        createdAt TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Connected to PostgreSQL and table "orders" is ready.');
+  } catch (err) {
+    console.error('Error initializing database', err.stack);
+    // Exit the process if DB initialization fails
+    process.exit(1);
+  } finally {
+    client.release();
+  }
+};
+
+module.exports = {
+  query: (text, params) => pool.query(text, params),
+  initializeDatabase,
+};
