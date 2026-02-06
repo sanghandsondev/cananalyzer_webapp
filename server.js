@@ -35,6 +35,10 @@ app.get("/products/cbcmsimulator", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "products", "cbcmsimulator.html"));
 });
 
+app.get("/support", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "support.html"));
+});
+
 // ------------------------ Payment routes ------------------------
 app.post("/api/pay", async (req, res) => {
   try {
