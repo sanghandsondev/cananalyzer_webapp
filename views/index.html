@@ -58,8 +58,8 @@
             </div>
           </div>
 
-          <a class="site-nav__link" href="#pricing">Pricing</a>
           <a class="site-nav__link" href="#downloads">Downloads</a>
+          <a class="site-nav__link" href="#pricing">Pricing</a>
           <a class="site-nav__link" href="#about">About</a>
           <a class="site-nav__link" href="#support">Support</a>
         </nav>
@@ -74,6 +74,193 @@
     <p class="sr-only">Web app for CAN bus analysis.</p>
 
     <main class="page">
+      <!-- Hero Product Showcases -->
+      <section class="hero-products">
+        <!-- Product 1: CAN Analyzer (Blue background, image right) -->
+        <div class="product-hero product-hero--primary">
+          <div class="product-hero__container">
+            <div class="product-hero__content">
+              <h2 class="product-hero__title">Simple and professional CAN bus analysis built for engineers</h2>
+              <p class="product-hero__description">
+                One-click analysis to easily decode, filter, and export CAN messages with over 40 features for automotive and embedded development.
+              </p>
+              <a href="/products/cananalyzer" class="btn-hero">
+                See Details
+                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+              </a>
+            </div>
+            <div class="product-hero__visual">
+              <img src="/assets/images/gear-test.png" alt="CAN Analyzer visualization" class="product-hero__image" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 2: CBCM Simulator (White background, image left) -->
+        <div class="product-hero product-hero--secondary">
+          <div class="product-hero__container">
+            <div class="product-hero__visual">
+              <img src="/assets/images/gear-test.png" alt="CBCM Simulator visualization" class="product-hero__image" />
+            </div>
+            <div class="product-hero__content">
+              <h2 class="product-hero__title">Công cụ mô phỏng CBCM chuyên nghiệp</h2>
+              <p class="product-hero__description">
+                Mô phỏng tín hiệu CBCM (Central Body Control Module) để kiểm thử và phát triển các hệ thống điều khiển xe một cách dễ dàng và chính xác.
+              </p>
+              <a href="/products/cbcmsimulator" class="btn-hero">
+                See Details
+                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Downloads Section -->
+      <section id="downloads" class="downloads-section">
+        <div class="downloads-section__container">
+          <div class="downloads-section__header">
+            <h2 class="downloads-section__title">Download Products</h2>
+            <p class="downloads-section__subtitle">Get started with our tools for your operating system</p>
+          </div>
+
+          <div class="downloads-grid">
+            <!-- CAN Analyzer Downloads -->
+            <div class="download-product">
+              <div class="download-product__header">
+                <div class="download-product__icon" aria-hidden="true">
+                  <i class="fa-solid fa-microchip"></i>
+                </div>
+                <div class="download-product__info">
+                  <h3 class="download-product__title">CAN Analyzer</h3>
+                  <p class="download-product__desc">Version 1.0.0</p>
+                </div>
+              </div>
+
+              <div class="download-product__links">
+                <a href="/downloads/windows_x64/can-analyzer-windows-x64-1.0.0.zip" class="download-btn" download>
+                  <span class="download-btn__icon-wrapper">
+                    <i class="fa-brands fa-windows download-btn__icon-main"></i>
+                  </span>
+                  <span class="download-btn__content">
+                    <span class="download-btn__os">Windows (.zip) • 45 MB</span>
+                    <span class="download-btn__detail">x64 • Win 10, 11</span>
+                  </span>
+                  <span class="download-btn__action">
+                    <i class="fa-solid fa-download"></i>
+                  </span>
+                </a>
+
+                <a href="/downloads/linux_debian/can-analyzer-linux-amd64-1.0.0.deb" class="download-btn" download>
+                  <span class="download-btn__icon-wrapper">
+                    <i class="fa-brands fa-linux download-btn__icon-main"></i>
+                  </span>
+                  <span class="download-btn__content">
+                    <span class="download-btn__os">.deb • 42 MB</span>
+                    <span class="download-btn__detail">x64 • Debian, Ubuntu</span>
+                  </span>
+                  <span class="download-btn__action">
+                    <i class="fa-solid fa-download"></i>
+                  </span>
+                </a>
+
+                <a href="/downloads/linux_redhat/can-analyzer-linux-x86_64-1.0.0.rpm" class="download-btn" download>
+                  <span class="download-btn__icon-wrapper">
+                    <i class="fa-brands fa-linux download-btn__icon-main"></i>
+                  </span>
+                  <span class="download-btn__content">
+                    <span class="download-btn__os">.rpm • 42 MB</span>
+                    <span class="download-btn__detail">x64 • Red Hat, Fedora</span>
+                  </span>
+                  <span class="download-btn__action">
+                    <i class="fa-solid fa-download"></i>
+                  </span>
+                </a>
+
+                <a href="/downloads/linux_generic/can-analyzer-linux-x86-64-1.0.0.tar.gz" class="download-btn" download>
+                  <span class="download-btn__icon-wrapper">
+                    <i class="fa-brands fa-linux download-btn__icon-main"></i>
+                  </span>
+                  <span class="download-btn__content">
+                    <span class="download-btn__os">.tar.gz • 42 MB</span>
+                    <span class="download-btn__detail">x64 • Generic Linux</span>
+                  </span>
+                  <span class="download-btn__action">
+                    <i class="fa-solid fa-download"></i>
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            <!-- CBCM Simulator Downloads -->
+            <div class="download-product">
+              <div class="download-product__header">
+                <div class="download-product__icon" aria-hidden="true">
+                  <i class="fa-solid fa-car"></i>
+                </div>
+                <div class="download-product__info">
+                  <h3 class="download-product__title">CBCM Simulator</h3>
+                  <p class="download-product__desc">Version 1.0.0</p>
+                </div>
+              </div>
+
+              <div class="download-product__links">
+                <a href="/downloads/windows_x64/cbcm-simulator-windows-x64-1.0.0.zip" class="download-btn" download>
+                  <span class="download-btn__icon-wrapper">
+                    <i class="fa-brands fa-windows download-btn__icon-main"></i>
+                  </span>
+                  <span class="download-btn__content">
+                    <span class="download-btn__os">Windows (.zip) • 38 MB</span>
+                    <span class="download-btn__detail">x64 • Win 10, 11</span>
+                  </span>
+                  <span class="download-btn__action">
+                    <i class="fa-solid fa-download"></i>
+                  </span>
+                </a>
+
+                <a href="/downloads/linux_debian/cbcm-simulator-linux-amd64-1.0.0.deb" class="download-btn" download>
+                  <span class="download-btn__icon-wrapper">
+                    <i class="fa-brands fa-linux download-btn__icon-main"></i>
+                  </span>
+                  <span class="download-btn__content">
+                    <span class="download-btn__os">.deb • 36 MB</span>
+                    <span class="download-btn__detail">x64 • Debian, Ubuntu</span>
+                  </span>
+                  <span class="download-btn__action">
+                    <i class="fa-solid fa-download"></i>
+                  </span>
+                </a>
+
+                <a href="/downloads/linux_redhat/cbcm-simulator-linux-x86_64-1.0.0.rpm" class="download-btn" download>
+                  <span class="download-btn__icon-wrapper">
+                    <i class="fa-brands fa-linux download-btn__icon-main"></i>
+                  </span>
+                  <span class="download-btn__content">
+                    <span class="download-btn__os">.rpm • 36 MB</span>
+                    <span class="download-btn__detail">x64 • Red Hat, Fedora</span>
+                  </span>
+                  <span class="download-btn__action">
+                    <i class="fa-solid fa-download"></i>
+                  </span>
+                </a>
+
+                <a href="/downloads/linux_generic/cbcm-simulator-linux-x86-64-1.0.0.tar.gz" class="download-btn" download>
+                  <span class="download-btn__icon-wrapper">
+                    <i class="fa-brands fa-linux download-btn__icon-main"></i>
+                  </span>
+                  <span class="download-btn__content">
+                    <span class="download-btn__os">.tar.gz • 36 MB</span>
+                    <span class="download-btn__detail">x64 • Generic Linux</span>
+                  </span>
+                  <span class="download-btn__action">
+                    <i class="fa-solid fa-download"></i>
+                  </span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div class="page__container">
         <!-- Products -->
         <section id="products" class="info-card" aria-label="Products">
@@ -84,7 +271,7 @@
           </p>
         </section>
 
-        <!-- Pricing (existing pricing card) -->
+        <!-- Pricing (moved after downloads) -->
         <section id="pricing" class="pricing-card" aria-label="License pricing">
           <h2 class="pricing-card__title">License</h2>
           <p class="pricing-card__subtitle">Plans for customers</p>
@@ -103,26 +290,6 @@
           <button id="buyNowBtn" type="button" class="btn btn--primary">
             Buy Now
           </button>
-        </section>
-
-        <!-- Downloads (existing downloads card) -->
-        <section id="downloads" class="downloads-card" aria-label="Downloads">
-          <h2 class="downloads-card__title">Downloads</h2>
-          <p class="downloads-card__subtitle">Download the app for your OS</p>
-          <ul class="download-links">
-            <li>
-              <a href="/downloads/windows_x64/can-analyzer-windows-x64-1.0.0.zip" class="btn-download" download>
-                <span class="btn-download__os">Windows</span>
-                <span class="btn-download__icon" aria-hidden="true">↓</span>
-              </a>
-            </li>
-            <li>
-              <a href="/downloads/linux_x86-64/can-analyzer-linux-x86-64-1.0.0.tar.gz" class="btn-download" download>
-                <span class="btn-download__os">Linux</span>
-                <span class="btn-download__icon" aria-hidden="true">↓</span>
-              </a>
-            </li>
-          </ul>
         </section>
 
         <!-- About -->

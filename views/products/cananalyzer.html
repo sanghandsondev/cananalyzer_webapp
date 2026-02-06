@@ -9,12 +9,36 @@
     <link rel="stylesheet" href="/css/index.css" />
   </head>
   <body>
+    <!-- Simple Header (logo only) -->
+    <header class="site-header" role="banner">
+      <div class="site-header__container">
+        <a class="brand" href="/" aria-label="CAN Analyzer home">
+          <span class="brand__mark" aria-hidden="true">
+            <img class="brand__logo" src="/assets/brand/logo-gear.png" alt="" />
+          </span>
+          <span class="brand__text">CAN Analyzer</span>
+        </a>
+      </div>
+    </header>
+
     <main class="page">
       <div class="page__container">
         <section class="info-card">
           <h1 class="info-card__title">CAN Analyzer</h1>
-          <p class="info-card__text">TODO</p>
-          <p><a href="/">← Back to Home</a></p>
+          <p class="info-card__text">
+            A powerful desktop application for CAN bus analysis. Decode, filter, log, and export CAN messages with ease.
+          </p>
+          <p class="info-card__text" style="margin-top: 16px;">
+            <strong>Features:</strong>
+          </p>
+          <ul style="margin: 12px 0; padding-left: 20px; color: rgba(17, 24, 39, 0.85);">
+            <li>Real-time CAN message decoding</li>
+            <li>Advanced filtering capabilities</li>
+            <li>Session logging and replay</li>
+            <li>Export to multiple formats</li>
+            <li>DBC file support</li>
+          </ul>
+          <p><a href="/" style="color: #1f6feb; text-decoration: none; font-weight: 600;">← Back to Home</a></p>
         </section>
       </div>
     </main>
