@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const buyNowBtn = document.getElementById('buyNowBtn');
+  // Get all Buy Now buttons (now there are multiple in pricing cards)
+  const buyNowButtons = document.querySelectorAll('.pricing-card__btn');
   const modal = document.getElementById('paymentModal');
   const closeTriggers = modal.querySelectorAll('[data-close="true"]');
   const paymentForm = document.getElementById('paymentForm');
@@ -7,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const emailError = document.getElementById('emailError');
   const submitPaymentBtn = document.getElementById('submitPaymentBtn');
   const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
+
+  let selectedProduct = null;
 
   function openModal() {
     modal.classList.add('is-open');
@@ -51,7 +54,22 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSubmitButtonState();
   }
 
-  buyNowBtn.addEventListener('click', openModal);
+  // Add click event to all Buy Now buttons
+  buyNowButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Extract product info from the pricing card
+      const pricingCard = btn.closest('.pricing-card');
+      const productName = pricingCard.querySelector('.pricing-card__title').textContent.trim();
+      const priceAmount = pricingCard.querySelector('.pricing-card__amount').textContent.replace('$', '').trim();
+      
+      selectedProduct = {
+        name: productName,
+        price: parseFloat(priceAmount)
+      };
+      
+      openModal();
+    });
+  });
 
   closeTriggers.forEach(trigger => {
     trigger.addEventListener('click', closeModal);
@@ -69,17 +87,44 @@ document.addEventListener('DOMContentLoaded', () => {
     radio.addEventListener('change', updateSubmitButtonState);
   });
 
-  paymentForm.addEventListener('submit', (e) => {
+  paymentForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     handleEmailValidation(); // Final check
 
-    if (!submitPaymentBtn.disabled) {
+    if (!submitPaymentBtn.disabled && selectedProduct) {
       const email = emailInput.value;
       const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
 
       if (selectedPaymentMethod === 'paypal') {
-        // Redirect to PayPal payment route with email
-        window.location.href = `/api/paypal/pay?email=${encodeURIComponent(email)}`;
+        try {
+          // Send POST request to payment API
+          const response = await fetch('/api/pay', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: email,
+              paymentMethod: selectedPaymentMethod,
+              productName: selectedProduct.name,
+              price: selectedProduct.price
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Payment request failed');
+          }
+
+          const data = await response.json();
+          
+          // Redirect to PayPal approval URL
+          if (data.approvalUrl) {
+            window.location.href = data.approvalUrl;
+          }
+        } catch (error) {
+          console.error('Payment error:', error);
+          alert('Payment failed. Please try again.');
+        }
       }
       // Add other payment methods here if needed
     }
