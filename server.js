@@ -117,7 +117,7 @@ app.get("/paypal/approve", async (req, res) => {
     if (!orderId) {
       return res.render("approve", { 
         status: "FAILED", 
-        message: "Không tìm thấy mã đơn hàng.", 
+        message: "Order ID not found.", 
         orderId: null,
         email: null
       });
@@ -132,12 +132,12 @@ app.get("/paypal/approve", async (req, res) => {
 
     // 2. Check payment status
     let status = "FAILED";
-    let message = "Thanh toán thất bại. Vui lòng thử lại.";
+    let message = "Payment failed. Please try again.";
 
     if (captureData) {
       if (captureData.status === "COMPLETED") {
         status = "COMPLETED";
-        message = "Thanh toán thành công! Giấy phép sẽ được gửi đến email của bạn.";
+        message = "Payment successful! Your license will be sent to your email.";
         
         // Extract payer info from capture data
         const payer = captureData.payer;
@@ -183,7 +183,7 @@ app.get("/paypal/approve", async (req, res) => {
 
       } else if (captureData.status === "PAYER_ACTION_REQUIRED" || captureData.status === "PENDING") {
         status = "PENDING";
-        message = "Thanh toán của bạn đang chờ xử lý. Chúng tôi sẽ thông báo cho bạn khi hoàn tất.";
+        message = "Your payment is pending. We will notify you when it is completed.";
         await db.query("UPDATE paypal_orders SET status = $1 WHERE orderId = $2", ["PENDING", orderId]);
       }
     }
@@ -199,7 +199,7 @@ app.get("/paypal/approve", async (req, res) => {
     console.error("Error in approve route:", error);
     res.render("approve", { 
       status: "FAILED", 
-      message: "Đã có lỗi xảy ra trong quá trình xử lý thanh toán.", 
+      message: "An error occurred while processing the payment.", 
       orderId: req.query.token,
       email: null
     });
@@ -369,18 +369,48 @@ app.post("/api/license/notify", async (req, res) => {
     }
 
     // Send the license key to the user's email
-    const { rows } = await db.query("SELECT email FROM paypal_orders WHERE orderId = $1", [orderId]);
+    const { rows } = await db.query(
+      `SELECT email, payerGivenName, payerSurname, productName, productPrice, currency, createdAt 
+       FROM paypal_orders WHERE orderId = $1`, 
+      [orderId]
+    );
     const row = rows[0];
 
-    if (row && row.email) {
-      console.log(`Sending license ${licenseKey} to ${row.email} for order ${orderId}`);
-      const emailSubject = "Your CAN Analyzer License Key";
-      const emailContent = mailer.getLicenseEmailTemplate(licenseKey);
-      mailer.sendEmail(row.email, emailSubject, emailContent)
-        .then(() => console.log(`Successfully sent license email to ${row.email}`))
-        .catch(emailErr => console.error(`Failed to send license email for order ${orderId}:`, emailErr));
+    if (row) {
+      // Use payerEmail from PayPal if available, otherwise fall back to form input email
+      const recipientEmail = row.email;
+      
+      if (recipientEmail) {
+        console.log(`Sending license ${licenseKey} to ${recipientEmail} for order ${orderId}`);
+        
+        const customerInfo = {
+          givenName: row.payergivenname || '',
+          surname: row.payersurname || ''
+        };
+
+        const productInfo = {
+          productName: row.productname || 'CAN Analyzer License',
+          productPrice: parseFloat(row.productprice) || 0,
+          currency: row.currency || 'USD'
+        };
+        
+        const emailSubject = "Your CAN Analyzer License Key";
+        const emailContent = mailer.getLicenseEmailTemplate(
+          licenseKey, 
+          orderId, 
+          customerInfo,
+          productInfo,
+          row.createdat
+        );
+        
+        mailer.sendEmail(recipientEmail, emailSubject, emailContent)
+          .then(() => console.log(`Successfully sent license email to ${recipientEmail}`))
+          .catch(emailErr => console.error(`Failed to send license email for order ${orderId}:`, emailErr));
+      } else {
+        console.error(`Could not find email for order ${orderId} to send license.`);
+      }
     } else {
-      console.error(`Could not find email for order ${orderId} to send license.`);
+      console.error(`Could not find order ${orderId} in database.`);
     }
 
     res.status(200).json({ message: "License status updated successfully" });

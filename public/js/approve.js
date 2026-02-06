@@ -38,14 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update UI based on new status
         if (currentStatus === 'COMPLETED') {
-          statusTitle.textContent = 'Thanh toán thành công!';
-          statusTitle.className = 'result-title--success';
-          statusMessage.textContent = 'Thanh toán thành công! Giấy phép sẽ được gửi đến email của bạn.';
+          statusTitle.textContent = 'Payment Successful!';
+          statusTitle.className = 'result-title result-title--success';
+          statusMessage.textContent = 'Payment successful! Your license will be sent to your email.';
           clearInterval(pollStatus); // Stop polling on success
         } else if (currentStatus === 'FAILED') {
-          statusTitle.textContent = 'Thanh toán thất bại';
-          statusTitle.className = 'result-title--fail';
-          statusMessage.textContent = 'Thanh toán thất bại. Vui lòng thử lại.';
+          statusTitle.textContent = 'Payment Failed';
+          statusTitle.className = 'result-title result-title--fail';
+          statusMessage.textContent = 'Payment failed. Please try again.';
           clearInterval(pollStatus); // Stop polling on failure
         }
         // If status is still PENDING, do nothing and let it poll again.
