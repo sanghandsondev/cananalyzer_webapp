@@ -373,7 +373,7 @@
 /* Downloads Section */
 .downloads-section {
   background: #f8f9fa;
-  padding: 40px 48px;
+  padding: 80px 48px;
   margin: 0 -24px;
 }
 
@@ -412,7 +412,7 @@
   background: #fff;
   border: 1px solid rgba(17, 24, 39, 0.08);
   border-radius: 16px;
-  padding: 24px;
+  padding: 46px 24px;
   box-shadow: 0 4px 16px rgba(17, 24, 39, 0.06);
   transition: all 200ms ease;
 }
