@@ -14,7 +14,7 @@ async function generateAccessToken() {
     return response.data.access_token;
 }
 
-exports.createOrder = async function(email) {
+exports.createOrder = async function(email, productName, productPrice, currency = 'USD') {
     const accessToken = await generateAccessToken();
 
     const orderData = {
@@ -23,23 +23,23 @@ exports.createOrder = async function(email) {
             {
                 items: [
                     {
-                        name: "Can Analyzer License",
-                        description: "1 Year Subscription For Can Analyzer License",
+                        name: productName,
+                        description: `1 Year Subscription For ${productName}`,
                         quantity: "1",
                         unit_amount: {
-                            currency_code: "USD",
-                            value: "1.00"
+                            currency_code: currency,
+                            value: productPrice.toFixed(2)
                         }
                     },
                 ],
 
                 amount: {
-                    currency_code: "USD",
-                    value: "1.00",
+                    currency_code: currency,
+                    value: productPrice.toFixed(2),
                     breakdown: {
                         item_total: {
-                            currency_code: "USD",
-                            value: "1.00"
+                            currency_code: currency,
+                            value: productPrice.toFixed(2)
                         }
                     }
                 }
@@ -71,7 +71,6 @@ exports.createOrder = async function(email) {
             data: JSON.stringify(orderData)
         });
 
-        // console.log("Create Order Response:");
         console.log(response.data);
 
         return {

@@ -1,5 +1,5 @@
 .result-container {
-  max-width: 500px;
+  max-width: 700px;
   margin: 10vh auto;
   padding: 2rem;
   border-radius: 8px;
@@ -10,6 +10,7 @@
 
 .result-title--success {
   font-size: 2rem;
+  font-weight: 600;
   color: #28a745;
   margin-bottom: 1rem;
 }
@@ -17,24 +18,72 @@
 .result-title--fail {
   font-size: 2rem;
   color: #dc3545;
+  font-weight: 600;
   margin-bottom: 1rem;
 }
 
 .result-title--pending {
   font-size: 2rem;
   color: #ffc107;
+  font-weight: 600;
   margin-bottom: 1rem;
 }
 
 .result-message {
   font-size: 1.1rem;
   color: #333;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+}
+
+.order-details {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.5rem;
+  margin: 1rem auto;
+  max-width: 500px;
+  background-color: #f8f9fa;
+}
+
+.order-detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+}
+
+.order-detail-item:not(:last-child) {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.order-detail-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.order-detail-value {
+  color: #333;
+  word-break: break-all;
+}
+
+.result-icon {
+  font-size: 60px;
+}
+
+.result-icon--success {
+  color: #28a745;
+}
+
+.result-icon--fail {
+  color: #dc3545;
+}
+
+.result-icon--pending {
+  color: #ffc107;
 }
 
 .btn-home {
   display: inline-block;
   padding: 0.75rem 1.5rem;
+  margin-top: 10px;
   font-size: 1rem;
   font-weight: 600;
   color: #fff;

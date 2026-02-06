@@ -1,139 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Get all Buy Now buttons (now there are multiple in pricing cards)
-  const buyNowButtons = document.querySelectorAll('.pricing-card__btn');
-  const modal = document.getElementById('paymentModal');
-  const closeTriggers = modal.querySelectorAll('[data-close="true"]');
-  const paymentForm = document.getElementById('paymentForm');
-  const emailInput = document.getElementById('emailInput');
-  const emailError = document.getElementById('emailError');
-  const submitPaymentBtn = document.getElementById('submitPaymentBtn');
-  const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
-
-  let selectedProduct = null;
-
-  function openModal() {
-    modal.classList.add('is-open');
-    modal.setAttribute('aria-hidden', 'false');
-    emailInput.focus();
-  }
-
-  function closeModal() {
-    modal.classList.remove('is-open');
-    modal.setAttribute('aria-hidden', 'true');
-  }
-
-  function validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(String(email).toLowerCase());
-  }
-
-  function updateSubmitButtonState() {
-    const isEmailValid = validateEmail(emailInput.value);
-    let isPaymentMethodSelected = false;
-    paymentMethodRadios.forEach(radio => {
-      if (radio.checked) {
-        isPaymentMethodSelected = true;
-      }
-    });
-
-    if (isEmailValid && isPaymentMethodSelected) {
-      submitPaymentBtn.disabled = false;
-    } else {
-      submitPaymentBtn.disabled = true;
-    }
-  }
-
-  function handleEmailValidation() {
-    if (emailInput.value === '') {
-      emailError.textContent = '';
-    } else if (!validateEmail(emailInput.value)) {
-      emailError.textContent = 'Please enter a valid email address.';
-    } else {
-      emailError.textContent = '';
-    }
-    updateSubmitButtonState();
-  }
-
-  // Add click event to all Buy Now buttons
-  buyNowButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      // Extract product info from the pricing card
-      const pricingCard = btn.closest('.pricing-card');
-      const productName = pricingCard.querySelector('.pricing-card__title').textContent.trim();
-      const priceAmount = pricingCard.querySelector('.pricing-card__amount').textContent.replace('$', '').trim();
-      
-      selectedProduct = {
-        name: productName,
-        price: parseFloat(priceAmount)
-      };
-      
-      openModal();
-    });
-  });
-
-  closeTriggers.forEach(trigger => {
-    trigger.addEventListener('click', closeModal);
-  });
-
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('is-open')) {
-      closeModal();
-    }
-  });
-
-  emailInput.addEventListener('input', handleEmailValidation);
-
-  paymentMethodRadios.forEach(radio => {
-    radio.addEventListener('change', updateSubmitButtonState);
-  });
-
-  paymentForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    handleEmailValidation(); // Final check
-
-    if (!submitPaymentBtn.disabled && selectedProduct) {
-      const email = emailInput.value;
-      const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-
-      if (selectedPaymentMethod === 'paypal') {
-        try {
-          // Send POST request to payment API
-          const response = await fetch('/api/pay', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: email,
-              paymentMethod: selectedPaymentMethod,
-              productName: selectedProduct.name,
-              price: selectedProduct.price
-            })
-          });
-
-          if (!response.ok) {
-            throw new Error('Payment request failed');
-          }
-
-          const data = await response.json();
-          
-          // Redirect to PayPal approval URL
-          if (data.approvalUrl) {
-            window.location.href = data.approvalUrl;
-          }
-        } catch (error) {
-          console.error('Payment error:', error);
-          alert('Payment failed. Please try again.');
-        }
-      }
-      // Add other payment methods here if needed
-    }
-  });
-
-  // Initial state check
-  updateSubmitButtonState();
-
-  // Products dropdown (header)
+  // ========== Header Navigation Dropdown ==========
   const dropdowns = Array.from(document.querySelectorAll('[data-nav-dd]'));
 
   const closeAllDropdowns = () => {
@@ -164,46 +30,173 @@ document.addEventListener('DOMContentLoaded', () => {
     closeAllDropdowns();
   });
 
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeAllDropdowns();
-  });
-
-  // Modal logic
-  const openModalButtons = document.querySelectorAll('.pricing-card__btn');
-  const closeModalTriggers = modal?.querySelectorAll('[data-close]');
+  // ========== Payment Modal Logic ==========
+  const modal = document.getElementById('paymentModal');
+  const buyNowButtons = document.querySelectorAll('.pricing-card__btn');
+  const closeTriggers = modal?.querySelectorAll('[data-close="true"]');
+  const paymentForm = document.getElementById('paymentForm');
+  const emailInput = document.getElementById('emailInput');
+  const emailError = document.getElementById('emailError');
+  const submitPaymentBtn = document.getElementById('submitPaymentBtn');
+  const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
+  const productNameEl = document.getElementById('productName');
+  const productPriceEl = document.getElementById('productPrice');
 
   let currentProduct = null;
 
-  openModalButtons?.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      // Get product information from the pricing card
-      const pricingCard = btn.closest('.pricing-card');
-      const productName = pricingCard?.querySelector('.pricing-card__title')?.textContent;
-      const productPrice = pricingCard?.querySelector('.pricing-card__amount')?.textContent;
-      const productCurrency = pricingCard?.querySelector('.pricing-card__currency')?.textContent;
+  function openModal() {
+    modal?.classList.add('is-open');
+    modal?.setAttribute('aria-hidden', 'false');
+    emailInput?.focus();
+  }
 
-      // Store product info
+  function closeModal() {
+    modal?.classList.remove('is-open');
+    modal?.setAttribute('aria-hidden', 'true');
+    emailInput.value = '';
+    emailError.textContent = '';
+    paymentMethodRadios.forEach(radio => radio.checked = false);
+    updateSubmitButtonState();
+  }
+
+  function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+  }
+
+  function updateSubmitButtonState() {
+    const isEmailValid = validateEmail(emailInput?.value || '');
+    const isPaymentMethodSelected = Array.from(paymentMethodRadios).some(radio => radio.checked);
+
+    submitPaymentBtn.disabled = !(isEmailValid && isPaymentMethodSelected);
+  }
+
+  function handleEmailValidation() {
+    const email = emailInput?.value || '';
+    
+    if (email === '') {
+      emailError.textContent = '';
+    } else if (!validateEmail(email)) {
+      emailError.textContent = 'Please enter a valid email address.';
+    } else {
+      emailError.textContent = '';
+    }
+    updateSubmitButtonState();
+  }
+
+  // Open modal when clicking Buy Now buttons
+  buyNowButtons?.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const pricingCard = btn.closest('.pricing-card');
+      const productName = pricingCard?.querySelector('.pricing-card__title')?.textContent.trim();
+      const priceAmountText = pricingCard?.querySelector('.pricing-card__amount')?.textContent.trim();
+      const currency = pricingCard?.querySelector('.pricing-card__currency')?.textContent.trim() || 'USD';
+
+      // Extract numeric value from price text (remove $ and any whitespace)
+      const priceValue = priceAmountText ? parseFloat(priceAmountText.replace(/[$\s]/g, '')) : 0;
+
       currentProduct = {
         name: productName,
-        price: productPrice,
-        currency: productCurrency
+        price: priceValue,
+        currency: currency
       };
 
-      // Update modal with product info
-      const productNameEl = document.getElementById('productName');
-      const productPriceEl = document.getElementById('productPrice');
-      
-      if (productNameEl && currentProduct.name) {
-        productNameEl.textContent = currentProduct.name;
-      }
-      
-      if (productPriceEl && currentProduct.price) {
-        productPriceEl.textContent = `${currentProduct.price} ${currentProduct.currency || ''}`;
-      }
+      // Update modal display
+      if (productNameEl) productNameEl.textContent = currentProduct.name;
+      if (productPriceEl) productPriceEl.textContent = `$${currentProduct.price.toFixed(2)} ${currentProduct.currency}`;
 
-      modal?.classList.add('is-open');
-      modal?.setAttribute('aria-hidden', 'false');
+      openModal();
     });
   });
+
+  // Close modal triggers
+  closeTriggers?.forEach(trigger => {
+    trigger.addEventListener('click', closeModal);
+  });
+
+  // Email input validation
+  emailInput?.addEventListener('input', handleEmailValidation);
+
+  // Payment method selection
+  paymentMethodRadios?.forEach(radio => {
+    radio.addEventListener('change', updateSubmitButtonState);
+  });
+
+  // Form submission
+  paymentForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = emailInput?.value.trim();
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+
+    emailError.textContent = "";
+
+    if (!email) {
+      emailError.textContent = "Email is required.";
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      emailError.textContent = "Please enter a valid email address.";
+      return;
+    }
+
+    if (!paymentMethod) {
+      alert("Please select a payment method.");
+      return;
+    }
+
+    if (!currentProduct) {
+      alert("Product information is missing.");
+      return;
+    }
+
+    try {
+      submitPaymentBtn.disabled = true;
+      submitPaymentBtn.textContent = "Processing...";
+
+      const response = await fetch("/api/pay", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          productName: currentProduct.name,
+          productPrice: currentProduct.price,
+          paymentMethod,
+          currency: currentProduct.currency
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.approveUrl) {
+        window.location.href = result.approveUrl;
+      } else {
+        alert(result.error || "Failed to process payment. Please try again.");
+        submitPaymentBtn.disabled = false;
+        submitPaymentBtn.textContent = "Checkout";
+      }
+    } catch (error) {
+      console.error("Error during payment:", error);
+      alert("An error occurred. Please try again.");
+      submitPaymentBtn.disabled = false;
+      submitPaymentBtn.textContent = "Checkout";
+    }
+  });
+
+  // Escape key to close modal
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (modal?.classList.contains('is-open')) {
+        closeModal();
+      }
+      closeAllDropdowns();
+    }
+  });
+
+  // Initial state
+  updateSubmitButtonState();
 });
 

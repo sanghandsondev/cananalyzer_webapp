@@ -3,25 +3,86 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CAN Analyzer</title>
+    <title>Order Confirmation - CAN Analyzer</title>
     <link rel="icon" href="/assets/favicons/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/assets/favicons/favicon.png" />
     <link rel="stylesheet" href="/css/style.css" />
     <link rel="stylesheet" href="/css/approve.css" />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      referrerpolicy="no-referrer"
+    />
   </head>
   <body>
     <div id="resultContainer" class="result-container" data-order-id="<%= orderId %>" data-status="<%= status %>">
       <% if (status === 'COMPLETED') { %>
-        <h1 id="statusTitle" class="result-title--success">Payment successful!</h1>
+        <div class="result-icon result-icon--success">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h1 id="statusTitle" class="result-title result-title--success">Payment Successful!</h1>
+        <p id="statusMessage" class="result-message">Thank you for your purchase. Your license key will be sent to your email shortly.</p>
+        
+        <div class="order-details">
+          <div class="order-detail-item">
+            <span class="order-detail-label">Order ID:</span>
+            <span class="order-detail-value"><%= orderId %></span>
+          </div>
+          <% if (email) { %>
+          <div class="order-detail-item">
+            <span class="order-detail-label">License send to:</span>
+            <span class="order-detail-value"><%= email %></span>
+          </div>
+          <% } %>
+        </div>
       <% } else if (status === 'PENDING') { %>
-        <h1 id="statusTitle" class="result-title--pending">Payment pending</h1>
+        <div class="result-icon result-icon--pending">
+          <i class="fa-solid fa-clock"></i>
+        </div>
+        <h1 id="statusTitle" class="result-title result-title--pending">Payment Pending</h1>
+        <p id="statusMessage" class="result-message">Your payment is being processed. You will receive a confirmation email once completed.</p>
+        
+        <div class="order-details">
+          <div class="order-detail-item">
+            <span class="order-detail-label">Order ID:</span>
+            <span class="order-detail-value"><%= orderId %></span>
+          </div>
+          <% if (email) { %>
+          <div class="order-detail-item">
+            <span class="order-detail-label">Email:</span>
+            <span class="order-detail-value"><%= email %></span>
+          </div>
+          <% } %>
+        </div>
       <% } else { %>
-        <h1 id="statusTitle" class="result-title--fail">Payment failed</h1>
+        <div class="result-icon result-icon--fail">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+        <h1 id="statusTitle" class="result-title result-title--fail">Payment Failed</h1>
+        <p id="statusMessage" class="result-message"><%= message || 'Unfortunately, your payment could not be processed. Please try again.' %></p>
+        
+        <% if (orderId) { %>
+        <div class="order-details">
+          <div class="order-detail-item">
+            <span class="order-detail-label">Order ID:</span>
+            <span class="order-detail-value"><%= orderId %></span>
+          </div>
+        </div>
+        <% } %>
       <% } %>
       
-      <p id="statusMessage" class="result-message"><%= message %></p>
+      <div class="support-info">
+        <p class="support-text">
+          <i class="fa-solid fa-circle-info"></i>
+          If you have any questions about your order, please return to the Home page and contact us at the Support section with your Order ID.
+        </p>
+      </div>
       
-      <a href="/" class="btn-home">Back to Home</a>
+      <a href="/" class="btn-home">
+        <i class="fa-solid fa-house"></i>
+        Back to Home
+      </a>
     </div>
 
     <script src="/js/approve.js"></script>
