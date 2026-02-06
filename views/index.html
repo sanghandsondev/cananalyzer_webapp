@@ -277,7 +277,7 @@
             <!-- CAN Analyzer Pricing Card -->
             <div class="pricing-card">
               <div class="pricing-card__header">
-                <h3 class="pricing-card__title">CAN Analyzer</h3>
+                <h3 class="pricing-card__title">CAN Analyzer License</h3>
                 <p class="pricing-card__desc">Basic VPS for light websites or development testing</p>
               </div>
 
@@ -335,7 +335,7 @@
             <!-- CBCM Simulator Pricing Card -->
             <div class="pricing-card">
               <div class="pricing-card__header">
-                <h3 class="pricing-card__title">CBCM Simulator</h3>
+                <h3 class="pricing-card__title">CBCM Simulator License</h3>
                 <p class="pricing-card__desc">Entry plan for basic WordPress or low-traffic business sites</p>
               </div>
 
@@ -420,38 +420,47 @@
 
       <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
         <div class="modal__header">
-          <h3 id="paymentModalTitle" class="modal__title">Choose a payment method</h3>
+          <h3 id="paymentModalTitle" class="modal__title">Payment Information</h3>
           <button type="button" class="modal__close" aria-label="Close" data-close="true">×</button>
         </div>
 
         <div class="modal__body">
+          <!-- Product Information -->
+          <div class="product-info">
+            <div class="product-info__name" id="productName"><!-- Product name will be inserted here --></div>
+            <div class="product-info__price" id="productPrice"><!-- Product price will be inserted here --></div>
+          </div>
+
           <form id="paymentForm" novalidate>
             <div class="form-group">
-              <label for="emailInput">Email</label>
+              <label for="emailInput">Email<span class="required-mark">*</span></label>
+              <small class="form-hint">Make sure you enter the correct email address. We will send the License Key to this email.</small>
               <input type="email" id="emailInput" name="email" class="form-control" placeholder="Enter your email" required />
-              <small class="form-hint">Make sure you enter the correct email address.</small>
               <div id="emailError" class="form-error" aria-live="polite"></div>
             </div>
 
-            <p class="modal__hint">Select a payment method:</p>
+            <p class="modal__hint">Select a payment method<span class="required-mark">*</span></p>
             <div class="payment-options">
-              <div class="payment-option">
-                <input type="radio" id="paypal" name="paymentMethod" value="paypal" required>
-                <label for="paypal" class="payment-label">
-                  <span class="paypal-btn__logo" aria-hidden="true">
-                    <svg viewBox="0 0 120 32" height="18" focusable="false">
-                      <text x="0" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#003087">Pay</text>
-                      <text x="40" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#009cde">Pal</text>
-                    </svg>
-                  </span>
-                  <!-- <span>Thanh toán qua PayPal</span> -->
-                </label>
-              </div>
+              <label for="paypal" class="payment-label payment-label--full">
+                <input type="radio" id="paypal" name="paymentMethod" value="paypal" required class="payment-option__radio">
+                <span class="paypal-btn__logo" aria-hidden="true">
+                  <svg viewBox="0 0 130 32" height="18" focusable="false">
+                    <text x="0" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#003087">Pay</text>
+                    <text x="46" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#009cde">Pal</text>
+                  </svg>
+                </span>
+                <span class="payment-cards" aria-hidden="true">
+                  <i class="fa-brands fa-cc-visa"></i>
+                  <i class="fa-brands fa-cc-mastercard"></i>
+                  <i class="fa-brands fa-cc-amex"></i>
+                  <i class="fa-brands fa-cc-discover"></i>
+                </span>
+              </label>
             </div>
 
             <div class="modal__footer">
               <button id="submitPaymentBtn" type="submit" class="btn btn--primary" disabled>
-                Pay
+                Checkout
               </button>
             </div>
           </form>

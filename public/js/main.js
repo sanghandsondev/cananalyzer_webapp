@@ -167,5 +167,43 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeAllDropdowns();
   });
+
+  // Modal logic
+  const openModalButtons = document.querySelectorAll('.pricing-card__btn');
+  const closeModalTriggers = modal?.querySelectorAll('[data-close]');
+
+  let currentProduct = null;
+
+  openModalButtons?.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      // Get product information from the pricing card
+      const pricingCard = btn.closest('.pricing-card');
+      const productName = pricingCard?.querySelector('.pricing-card__title')?.textContent;
+      const productPrice = pricingCard?.querySelector('.pricing-card__amount')?.textContent;
+      const productCurrency = pricingCard?.querySelector('.pricing-card__currency')?.textContent;
+
+      // Store product info
+      currentProduct = {
+        name: productName,
+        price: productPrice,
+        currency: productCurrency
+      };
+
+      // Update modal with product info
+      const productNameEl = document.getElementById('productName');
+      const productPriceEl = document.getElementById('productPrice');
+      
+      if (productNameEl && currentProduct.name) {
+        productNameEl.textContent = currentProduct.name;
+      }
+      
+      if (productPriceEl && currentProduct.price) {
+        productPriceEl.textContent = `${currentProduct.price} ${currentProduct.currency || ''}`;
+      }
+
+      modal?.classList.add('is-open');
+      modal?.setAttribute('aria-hidden', 'false');
+    });
+  });
 });
 
