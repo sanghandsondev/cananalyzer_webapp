@@ -120,7 +120,7 @@
         <div class="downloads-section__container">
           <div class="downloads-section__header">
             <h2 class="downloads-section__title">Download Products</h2>
-            <p class="downloads-section__subtitle">Get started with our tools for your operating system</p>
+            <p class="downloads-section__subtitle">Get started with our tools for your operating system.</p>
           </div>
 
           <div class="downloads-grid">
@@ -261,37 +261,139 @@
         </div>
       </section>
 
-      <div class="page__container">
-        <!-- Products -->
-        <section id="products" class="info-card" aria-label="Products">
-          <h2 class="info-card__title">Products</h2>
-          <p class="info-card__subtitle">Desktop CAN tools</p>
-          <p class="info-card__text">
-            A CAN bus analysis tool with decode, filtering, logging, and export.
-          </p>
-        </section>
-
-        <!-- Pricing (moved after downloads) -->
-        <section id="pricing" class="pricing-card" aria-label="License pricing">
-          <h2 class="pricing-card__title">License</h2>
-          <p class="pricing-card__subtitle">Plans for customers</p>
-
-          <div class="price">
-            <span class="price__amount">$1</span>
-            <span class="price__period">/ year</span>
+      <!-- Pricing Section -->
+      <section id="pricing" class="pricing-section" aria-label="License pricing">
+        <div class="pricing-section__container">
+          <div class="pricing-section__header">
+            <h2 class="pricing-section__title">Simple and transparent pricing</h2>
+            <p class="pricing-section__subtitle">
+              Choose from high-performance Linux apps & clean OS installs, deployed in seconds with 1-click. Whether you're
+              launching a personal project or scaling enterprise cloud services, SkySilk delivers tailored VPS plans built for speed, scale,
+              and business-critical workloads.
+            </p>
           </div>
 
-          <ul class="features" aria-label="Features">
-            <li>Full access to CAN analysis features</li>
-            <li>Regular updates</li>
-            <li>Basic support</li>
-          </ul>
+          <div class="pricing-grid">
+            <!-- CAN Analyzer Pricing Card -->
+            <div class="pricing-card">
+              <div class="pricing-card__header">
+                <h3 class="pricing-card__title">CAN Analyzer</h3>
+                <p class="pricing-card__desc">Basic VPS for light websites or development testing</p>
+              </div>
 
-          <button id="buyNowBtn" type="button" class="btn btn--primary">
-            Buy Now
-          </button>
-        </section>
+              <div class="pricing-card__price">
+                <span class="pricing-card__amount">$1.00</span>
+                <span class="pricing-card__period">/y</span>
+                <span class="pricing-card__currency">USD</span>
+              </div>
 
+              <button type="button" class="pricing-card__btn">Buy Now</button>
+
+              <ul class="pricing-card__features">
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-microchip" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">vCPU</span>
+                  <span class="pricing-card__feature-value">1</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-memory" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">RAM</span>
+                  <span class="pricing-card__feature-value">1 GB</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-hard-drive" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">Storage</span>
+                  <span class="pricing-card__feature-value">30 GB NVMe</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">Manual Backups</span>
+                  <span class="pricing-card__feature-value">free</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">Manual Snapshots</span>
+                  <span class="pricing-card__feature-value">free</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-network-wired" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">IPv4 & IPv6</span>
+                  <span class="pricing-card__feature-value">UP to 1</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">Transfer</span>
+                  <span class="pricing-card__feature-value">500 GB</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">DDoS Protection</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- CBCM Simulator Pricing Card -->
+            <div class="pricing-card">
+              <div class="pricing-card__header">
+                <h3 class="pricing-card__title">CBCM Simulator</h3>
+                <p class="pricing-card__desc">Entry plan for basic WordPress or low-traffic business sites</p>
+              </div>
+
+              <div class="pricing-card__price">
+                <span class="pricing-card__amount">$1.00</span>
+                <span class="pricing-card__period">/y</span>
+                <span class="pricing-card__currency">USD</span>
+              </div>
+
+              <button type="button" class="pricing-card__btn">Buy Now</button>
+
+              <ul class="pricing-card__features">
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-microchip" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">vCPU</span>
+                  <span class="pricing-card__feature-value">2</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-memory" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">RAM</span>
+                  <span class="pricing-card__feature-value">2 GB</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-hard-drive" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">Storage</span>
+                  <span class="pricing-card__feature-value">50 GB NVMe</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">Manual Backups</span>
+                  <span class="pricing-card__feature-value">free</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">Manual Snapshots</span>
+                  <span class="pricing-card__feature-value">free</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-network-wired" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">IPv4 & IPv6</span>
+                  <span class="pricing-card__feature-value">UP to 1</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">Transfer</span>
+                  <span class="pricing-card__feature-value">1 TB</span>
+                </li>
+                <li class="pricing-card__feature">
+                  <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                  <span class="pricing-card__feature-label">DDoS Protection</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="page__container">
         <!-- About -->
         <section id="about" class="info-card" aria-label="About">
           <h2 class="info-card__title">About</h2>
