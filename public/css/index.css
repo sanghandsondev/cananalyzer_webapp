@@ -1,8 +1,8 @@
 /* Center page */
 .page {
-  min-height: calc(100vh - 48px);
-  display: block;
-  padding: 0 0 96px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .page__container {
@@ -921,6 +921,78 @@
 
   .download-btn__detail {
     font-size: 11px;
+  }
+}
+
+/* ========== ABOUT SECTION ========== */
+.about-section {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #3d566e 100%);
+  padding: 0;
+  margin: 0 -24px;
+  min-height: 800px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-section__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 48px;
+  width: 100%;
+}
+
+.about-section__content {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.about-section__title {
+  font-size: 38px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 24px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.about-section__description {
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .about-section {
+    min-height: 300px;
+  }
+
+  .about-section__container {
+    padding: 60px 24px;
+  }
+
+  .about-section__title {
+    font-size: 28px;
+  }
+
+  .about-section__description {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-section {
+    min-height: 250px;
+  }
+
+  .about-section__container {
+    padding: 40px 20px;
+  }
+
+  .about-section__title {
+    font-size: 24px;
   }
 }
 

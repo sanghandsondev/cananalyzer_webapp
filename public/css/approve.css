@@ -1,4 +1,11 @@
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .result-container {
+  flex: 1;
   max-width: 700px;
   margin: 10vh auto;
   padding: 2rem;
