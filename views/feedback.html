@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Feedback - CAN Analyzer</title>
+    <link rel="icon" href="/assets/favicons/favicon.png" type="image/png" />
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/feedback.css" />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body>
+    <!-- Header with auth -->
+    <header class="site-header" role="banner">
+      <div class="site-header__container">
+        <a class="brand" href="/" aria-label="CAN Analyzer home">
+          <span class="brand__mark" aria-hidden="true">
+            <img class="brand__logo" src="/assets/brand/logo-gear.png" alt="" />
+          </span>
+          <span class="brand__text">CAN Analyzer</span>
+        </a>
+
+        <!-- Right side - Auth section (hidden until JS loads) -->
+        <div class="site-header__auth" id="authSection" style="visibility: hidden;">
+          <!-- Will be populated by JS based on login state -->
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="page__container">
+        <section class="feedback-section">
+          <div class="feedback-header">
+            <h1 class="feedback-title">Feedback</h1>
+            <p class="feedback-subtitle">Share your thoughts, suggestions, or feedback about our products and services.</p>
+          </div>
+
+          <!-- Comment Input -->
+          <div class="comment-input-section">
+            <div class="comment-input-wrapper">
+              <div class="comment-avatar comment-avatar--input" id="commentInputAvatar">
+                <i class="fa-solid fa-user"></i>
+              </div>
+              <textarea 
+                id="commentInput" 
+                class="comment-textarea" 
+                placeholder="Write your feedback here..."
+                rows="3"
+                maxlength="500"
+              ></textarea>
+            </div>
+            <div class="comment-input-actions">
+              <span class="char-counter" id="charCounter">0/500</span>
+              <button type="button" class="btn btn--primary" id="submitCommentBtn" disabled>
+                <i class="fa-solid fa-paper-plane"></i>
+                Submit Feedback
+              </button>
+            </div>
+          </div>
+
+          <!-- Comments List -->
+          <div class="comments-section">
+            <h2 class="comments-title">
+              <i class="fa-solid fa-comments"></i>
+              Recent Feedback
+              <span class="comments-count" id="commentsCount">(0)</span>
+            </h2>
+            
+            <div class="comments-list" id="commentsList">
+              <!-- Comments will be loaded here -->
+              <div class="comments-loading" id="commentsLoading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Loading comments...
+              </div>
+              <div class="comments-empty" id="commentsEmpty" style="display: none;">
+                <i class="fa-solid fa-comment-slash"></i>
+                <p>No feedback yet. Be the first to share your thoughts!</p>
+              </div>
+            </div>
+
+            <!-- See More -->
+            <div class="comments-load-more" id="loadMoreSection" style="display: none;">
+              <span class="see-more-link" id="loadMoreBtn">See More</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal" aria-hidden="true">
+      <div class="modal__overlay" data-close="true"></div>
+
+      <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+        <div class="modal__header">
+          <h3 id="authModalTitle" class="modal__title">Login</h3>
+          <button type="button" class="modal__close" aria-label="Close" data-close="true">×</button>
+        </div>
+
+        <div class="modal__body">
+          <!-- Login Form -->
+          <form id="loginForm" class="auth-form" novalidate>
+            <div class="form-group">
+              <label for="loginUsername">Username<span class="required-mark">*</span></label>
+              <input 
+                type="text" 
+                id="loginUsername" 
+                name="username" 
+                class="form-control" 
+                placeholder="Enter your username ..." 
+                required 
+                minlength="3"
+                maxlength="50"
+              />
+              <div class="form-error" id="loginUsernameError">&nbsp;</div>
+            </div>
+
+            <div class="form-group">
+              <div class="label-row">
+                <label for="loginPassword">Password<span class="required-mark">*</span></label>
+                <small class="form-hint-inline">Minimum 6 characters</small>
+              </div>
+              <input 
+                type="password" 
+                id="loginPassword" 
+                name="password" 
+                class="form-control" 
+                placeholder="Enter your password ..." 
+                required 
+                minlength="6"
+              />
+              <div class="form-error" id="loginPasswordError">&nbsp;</div>
+            </div>
+
+            <div class="form-error form-error--general" id="loginGeneralError"></div>
+
+            <div class="modal__footer">
+              <button type="submit" class="btn btn--primary" id="loginSubmitBtn">
+                Login
+              </button>
+            </div>
+
+            <div class="auth-switch">
+              <span>Don't have an account?</span>
+              <button type="button" class="auth-switch__link" id="showRegisterBtn">Sign Up</button>
+            </div>
+          </form>
+
+          <!-- Register Form -->
+          <form id="registerForm" class="auth-form" style="display: none;" novalidate>
+            <div class="form-group">
+              <div class="label-row">
+                <label for="registerUsername">Username<span class="required-mark">*</span></label>
+                <small class="form-hint-inline">3-50 characters</small>
+              </div>
+              <input 
+                type="text" 
+                id="registerUsername" 
+                name="username" 
+                class="form-control" 
+                placeholder="Choose a username..." 
+                required 
+                minlength="3"
+                maxlength="50"
+              />
+              <div class="form-error" id="registerUsernameError">&nbsp;</div>
+            </div>
+
+            <div class="form-group">
+              <div class="label-row">
+                <label for="registerPassword">Password<span class="required-mark">*</span></label>
+                <small class="form-hint-inline">Minimum 6 characters</small>
+              </div>
+              <input 
+                type="password" 
+                id="registerPassword" 
+                name="password" 
+                class="form-control" 
+                placeholder="Choose a password..." 
+                required 
+                minlength="6"
+              />
+              <div class="form-error" id="registerPasswordError">&nbsp;</div>
+            </div>
+
+            <div class="form-group">
+              <label for="registerConfirmPassword">Confirm Password<span class="required-mark">*</span></label>
+              <input 
+                type="password" 
+                id="registerConfirmPassword" 
+                name="confirmPassword" 
+                class="form-control" 
+                placeholder="Confirm your password..." 
+                required 
+              />
+              <div class="form-error" id="registerConfirmPasswordError">&nbsp;</div>
+            </div>
+
+            <div class="form-error form-error--general" id="registerGeneralError"></div>
+
+            <div class="modal__footer">
+              <button type="submit" class="btn btn--primary" id="registerSubmitBtn">
+                Sign Up
+              </button>
+            </div>
+
+            <div class="auth-switch">
+              <span>Already have an account?</span>
+              <button type="button" class="auth-switch__link" id="showLoginBtn">Login</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="site-footer__container">
+        <p class="site-footer__text">© 2026 CAN Analyzer, Inc.</p>
+      </div>
+    </footer>
+
+    <script src="/js/feedback.js"></script>
+  </body>
+</html>

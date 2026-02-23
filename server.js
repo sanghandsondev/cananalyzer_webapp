@@ -5,6 +5,7 @@ const paypal = require("./services/paypal");
 const db = require("./services/db");
 const license = require("./services/license");
 const mailer = require("./services/mailer");
+const auth = require("./services/auth");
 const axios = require('axios');
 
 const app = express();
@@ -37,6 +38,196 @@ app.get("/products/cbcmsimulator", (req, res) => {
 
 app.get("/support", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "support.html"));
+});
+
+app.get("/feedback", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "feedback.html"));
+});
+
+// ------------------------ Authentication routes ------------------------
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    // Validation
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+
+    if (username.length < 3 || username.length > 50) {
+      return res.status(400).json({ error: "Username must be between 3 and 50 characters" });
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return res.status(400).json({ error: "Username can only contain letters, numbers, and underscores" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    const result = await auth.register(username, password);
+    res.json(result);
+  } catch (error) {
+    console.error("Registration error:", error.message);
+    if (error.message === "Username already exists") {
+      return res.status(409).json({ error: error.message });
+    }
+    res.status(500).json({ error: "Registration failed. Please try again." });
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+
+    const result = await auth.login(username, password);
+    res.json(result);
+  } catch (error) {
+    console.error("Login error:", error.message);
+    res.status(401).json({ error: "Invalid username or password" });
+  }
+});
+
+app.get("/api/auth/me", auth.authenticateToken, (req, res) => {
+  res.json({ user: req.user });
+});
+
+// ------------------------ Comments routes ------------------------
+app.get("/api/comments", async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const offset = page * limit;
+
+    // Get total count
+    const countResult = await db.query("SELECT COUNT(*) FROM feedback_comments");
+    const total = parseInt(countResult.rows[0].count);
+
+    // Get comments with user info, newest first
+    const { rows: comments } = await db.query(
+      `SELECT c.id, c.user_id, c.content, c.created_at, c.updated_at, u.username 
+       FROM feedback_comments c 
+       JOIN feedback_users u ON c.user_id = u.id 
+       ORDER BY c.created_at DESC 
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+
+    const hasMore = offset + comments.length < total;
+
+    res.json({ comments, total, hasMore });
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+});
+
+app.post("/api/comments", auth.authenticateToken, async (req, res) => {
+  try {
+    const { content } = req.body;
+    const userId = req.user.id;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: "Comment content is required" });
+    }
+
+    if (content.length > 500) {
+      return res.status(400).json({ error: "Comment is too long (max 500 characters)" });
+    }
+
+    const { rows } = await db.query(
+      `INSERT INTO feedback_comments (user_id, content) VALUES ($1, $2) 
+       RETURNING id, content, created_at`,
+      [userId, content.trim()]
+    );
+
+    const comment = rows[0];
+    comment.username = req.user.username;
+
+    res.status(201).json(comment);
+  } catch (error) {
+    console.error("Error creating comment:", error);
+    res.status(500).json({ error: "Failed to create comment" });
+  }
+});
+
+// Edit comment - only owner can edit their own comment
+app.put("/api/comments/:id", auth.authenticateToken, async (req, res) => {
+  try {
+    const commentId = parseInt(req.params.id);
+    const { content } = req.body;
+    const userId = req.user.id;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: "Comment content is required" });
+    }
+
+    if (content.length > 500) {
+      return res.status(400).json({ error: "Comment is too long (max 500 characters)" });
+    }
+
+    // Check if comment belongs to user
+    const { rows: existingRows } = await db.query(
+      "SELECT user_id FROM feedback_comments WHERE id = $1",
+      [commentId]
+    );
+
+    if (existingRows.length === 0) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    if (existingRows[0].user_id !== userId) {
+      return res.status(403).json({ error: "You can only edit your own comments" });
+    }
+
+    // Update comment
+    const { rows } = await db.query(
+      `UPDATE feedback_comments 
+       SET content = $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $2 
+       RETURNING id, content, created_at, updated_at`,
+      [content.trim(), commentId]
+    );
+
+    const comment = rows[0];
+    comment.username = req.user.username;
+
+    res.json(comment);
+  } catch (error) {
+    console.error("Error updating comment:", error);
+    res.status(500).json({ error: "Failed to update comment" });
+  }
+});
+
+// Delete comment - admin can delete any, users cannot delete
+app.delete("/api/comments/:id", auth.authenticateToken, async (req, res) => {
+  try {
+    const commentId = parseInt(req.params.id);
+    const isAdmin = req.user.username.toLowerCase() === 'admin';
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: "Only admin can delete comments" });
+    }
+
+    const result = await db.query(
+      "DELETE FROM feedback_comments WHERE id = $1 RETURNING id",
+      [commentId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    res.json({ message: "Comment deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    res.status(500).json({ error: "Failed to delete comment" });
+  }
 });
 
 // ------------------------ Payment routes ------------------------
