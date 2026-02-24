@@ -128,7 +128,7 @@ html {
   font-size: 12px;
   opacity: 0.7;
   transform: translateY(1px);
-  transition: transform 180ms ease;
+  transition: transform 500ms ease;
 }
 
 /* Products dropdown (header) */

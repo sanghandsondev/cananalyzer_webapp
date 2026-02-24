@@ -7,6 +7,7 @@
     <link rel="icon" href="/assets/favicons/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/assets/favicons/favicon.png" />
     <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/auth.css" />
     <link rel="stylesheet" href="/css/index.css" />
 
     <!-- Font Awesome (classic) -->
@@ -63,8 +64,8 @@
           <a class="site-nav__link" href="/feedback">Feedback</a>
         </nav>
 
-        <!-- Right side placeholder to keep centered nav aligned like the reference header -->
-        <div class="site-header__right" aria-hidden="true"></div>
+        <!-- Right side - Auth section -->
+        <div class="site-header__auth" id="authSection" style="visibility: hidden;"></div>
       </div>
     </header>
 
@@ -405,56 +406,82 @@
       </section>
     </main>
 
-    <!-- Modal -->
+    <!-- Payment Modal -->
     <div id="paymentModal" class="modal" aria-hidden="true">
       <div class="modal__overlay" data-close="true"></div>
 
       <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
         <div class="modal__header">
-          <h3 id="paymentModalTitle" class="modal__title">Payment Information</h3>
+          <h3 id="paymentModalTitle" class="modal__title">Purchase License</h3>
           <button type="button" class="modal__close" aria-label="Close" data-close="true">×</button>
         </div>
 
         <div class="modal__body">
-          <!-- Product Information -->
-          <div class="product-info">
-            <div class="product-info__name" id="productName"><!-- Product name will be inserted here --></div>
-            <div class="product-info__price" id="productPrice"><!-- Product price will be inserted here --></div>
+          <!-- Login Required Notice (shown when not logged in) -->
+          <div id="loginRequiredNotice" class="login-required-notice" style="display: none;">
+            <div class="login-required-notice__icon">
+              <i class="fa-solid fa-lock"></i>
+            </div>
+            <h4 class="login-required-notice__title">Login Required</h4>
+            <p class="login-required-notice__text">Please login or create an account to purchase a license. Your license will be linked to your account.</p>
+            <button type="button" class="btn btn--primary" id="loginToPayBtn">
+              <i class="fa-solid fa-right-to-bracket"></i>
+              Login to Continue
+            </button>
+            <p class="login-required-notice__signup">
+              Don't have an account? <button type="button" class="auth-switch__link" id="signupToPayBtn">Sign Up</button>
+            </p>
           </div>
 
-          <form id="paymentForm" novalidate>
-            <div class="form-group">
-              <label for="emailInput">Email<span class="required-mark">*</span></label>
-              <small class="form-hint">Make sure you enter the correct email address. We will send the License Key to this email.</small>
-              <input type="email" id="emailInput" name="email" class="form-control" placeholder="Enter your email" required />
-              <div id="emailError" class="form-error" aria-live="polite"></div>
+          <!-- Payment Form (shown when logged in) -->
+          <div id="paymentFormContainer" style="display: none;">
+            <!-- User Info -->
+            <div class="user-payment-info">
+              <div class="user-payment-info__avatar" id="paymentUserAvatar"></div>
+              <div class="user-payment-info__details">
+                <div class="user-payment-info__name" id="paymentUserName"></div>
+                <div class="user-payment-info__email" id="paymentUserEmail"></div>
+              </div>
             </div>
 
-            <p class="modal__hint">Select a payment method<span class="required-mark">*</span></p>
-            <div class="payment-options">
-              <label for="paypal" class="payment-label payment-label--full">
-                <input type="radio" id="paypal" name="paymentMethod" value="paypal" required class="payment-option__radio">
-                <span class="paypal-btn__logo" aria-hidden="true">
-                  <svg viewBox="0 0 130 32" height="18" focusable="false">
-                    <text x="0" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#003087">Pay</text>
-                    <text x="46" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#009cde">Pal</text>
-                  </svg>
-                </span>
-                <span class="payment-cards" aria-hidden="true">
-                  <i class="fa-brands fa-cc-visa"></i>
-                  <i class="fa-brands fa-cc-mastercard"></i>
-                  <i class="fa-brands fa-cc-amex"></i>
-                  <i class="fa-brands fa-cc-discover"></i>
-                </span>
-              </label>
+            <!-- Product Information -->
+            <div class="product-info">
+              <div class="product-info__name" id="productName"><!-- Product name will be inserted here --></div>
+              <div class="product-info__price" id="productPrice"><!-- Product price will be inserted here --></div>
             </div>
 
-            <div class="modal__footer">
-              <button id="submitPaymentBtn" type="submit" class="btn btn--primary" disabled>
-                Checkout
-              </button>
-            </div>
-          </form>
+            <p class="modal__hint modal__hint--note">
+              <i class="fa-solid fa-info-circle"></i>
+              License will be sent to your registered email address.
+            </p>
+
+            <form id="paymentForm" novalidate>
+              <p class="modal__hint">Select a payment method<span class="required-mark">*</span></p>
+              <div class="payment-options">
+                <label for="paypal" class="payment-label payment-label--full">
+                  <input type="radio" id="paypal" name="paymentMethod" value="paypal" required class="payment-option__radio">
+                  <span class="paypal-btn__logo" aria-hidden="true">
+                    <svg viewBox="0 0 130 32" height="18" focusable="false">
+                      <text x="0" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#003087">Pay</text>
+                      <text x="46" y="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#009cde">Pal</text>
+                    </svg>
+                  </span>
+                  <span class="payment-cards" aria-hidden="true">
+                    <i class="fa-brands fa-cc-visa"></i>
+                    <i class="fa-brands fa-cc-mastercard"></i>
+                    <i class="fa-brands fa-cc-amex"></i>
+                    <i class="fa-brands fa-cc-discover"></i>
+                  </span>
+                </label>
+              </div>
+
+              <div class="modal__footer">
+                <button id="submitPaymentBtn" type="submit" class="btn btn--primary" disabled>
+                  Checkout
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -465,6 +492,7 @@
       </div>
     </footer>
 
+    <script src="/js/auth.js"></script>
     <script src="/js/main.js"></script>
   </body>
 </html>

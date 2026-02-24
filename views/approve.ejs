@@ -22,7 +22,7 @@
           <i class="fa-solid fa-circle-check"></i>
         </div>
         <h1 id="statusTitle" class="result-title result-title--success">Payment Successful!</h1>
-        <p id="statusMessage" class="result-message">Thank you for your purchase. Your license key will be sent to your email shortly.</p>
+        <p id="statusMessage" class="result-message">Thank you for your purchase. Your license key has been sent to your email.</p>
         
         <div class="order-details">
           <div class="order-detail-item">
@@ -35,6 +35,11 @@
             <span class="order-detail-value"><%= email %></span>
           </div>
           <% } %>
+        </div>
+
+        <div class="license-info-box">
+          <i class="fa-solid fa-key"></i>
+          <p>You can also view and manage all your purchased licenses in the <a href="/my-licenses"><strong>My Licenses</strong></a> page.</p>
         </div>
       <% } else if (status === 'PENDING') { %>
         <div class="result-icon result-icon--pending">

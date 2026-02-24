@@ -8,7 +8,7 @@
 
 .feedback-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 10px;
 }
 
 .feedback-title {
@@ -41,7 +41,7 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
   border: none;
 }
 
@@ -148,7 +148,7 @@
   font-size: 15px;
   font-family: inherit;
   resize: vertical;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
   box-sizing: border-box;
 }
 
@@ -187,7 +187,7 @@
 }
 
 .comments-section {
-  margin-top: 40px;
+  margin-top: 10px;
 }
 
 .comments-title {
@@ -240,11 +240,11 @@
 .comment-item {
   display: flex;
   gap: 14px;
-  padding: 20px;
+  padding: 10px;
   background: #fff;
   border: 1px solid rgba(17, 24, 39, 0.08);
   border-radius: 12px;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .comment-item:hover {
@@ -305,7 +305,7 @@
   cursor: pointer;
   border-radius: 4px;
   color: rgba(17, 24, 39, 0.4);
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .comment-action-btn:hover {
@@ -342,7 +342,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .see-more-link:hover {
@@ -358,7 +358,7 @@
   font-weight: 600;
   cursor: pointer;
   padding: 8px 16px;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .btn-see-more:hover {
@@ -474,9 +474,9 @@
   padding: 0 14px;
   border: 1px solid rgba(17, 24, 39, 0.18);
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 14px;
   box-sizing: border-box;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .form-control:focus {
@@ -661,7 +661,7 @@
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .btn--primary {

@@ -1,20 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
   // ========== Constants ==========
   const AUTH_TOKEN_KEY = 'auth_token';
-  const USER_DATA_KEY = 'user_data';
   const COMMENTS_PER_PAGE = 10;
+  const MAX_COMMENT_LENGTH = 500;
 
   // ========== DOM Elements ==========
-  const authSection = document.getElementById('authSection');
-  const loginBtn = document.getElementById('loginBtn');
-  const authModal = document.getElementById('authModal');
-  const authModalTitle = document.getElementById('authModalTitle');
-  const loginForm = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
-  const showRegisterBtn = document.getElementById('showRegisterBtn');
-  const showLoginBtn = document.getElementById('showLoginBtn');
-  const closeTriggers = authModal?.querySelectorAll('[data-close="true"]');
-
   const commentInput = document.getElementById('commentInput');
   const submitCommentBtn = document.getElementById('submitCommentBtn');
   const commentsList = document.getElementById('commentsList');
@@ -32,15 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ========== Utility Functions ==========
   const getToken = () => localStorage.getItem(AUTH_TOKEN_KEY);
-  const setToken = (token) => localStorage.setItem(AUTH_TOKEN_KEY, token);
-  const removeToken = () => localStorage.removeItem(AUTH_TOKEN_KEY);
-
-  const getStoredUser = () => {
-    const data = localStorage.getItem(USER_DATA_KEY);
-    return data ? JSON.parse(data) : null;
-  };
-  const setStoredUser = (user) => localStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
-  const removeStoredUser = () => localStorage.removeItem(USER_DATA_KEY);
 
   const getInitials = (username) => {
     return username ? username.substring(0, 2).toUpperCase() : 'U';
@@ -66,64 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // ========== Auth UI Functions ==========
-  const isAdmin = (username) => username?.toLowerCase() === 'admin';
-  
-  const updateAuthUI = () => {
-    if (!authSection) return;
-
-    if (currentUser) {
-      const isUserAdmin = isAdmin(currentUser.username);
-      const avatarClass = isUserAdmin ? 'user-avatar user-avatar--admin' : 'user-avatar';
-      
-      authSection.innerHTML = `
-        <div class="user-info">
-          <div class="${avatarClass}">${getInitials(currentUser.username)}</div>
-          <span class="user-name">${currentUser.username}</span>
-        </div>
-        <button type="button" class="btn-auth btn-auth--logout" id="logoutBtn">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          Logout
-        </button>
-      `;
-
-      // Add logout listener
-      document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
-      
-      // Update comment input avatar with user initials
-      const commentInputAvatar = document.getElementById('commentInputAvatar');
-      if (commentInputAvatar) {
-        commentInputAvatar.innerHTML = getInitials(currentUser.username);
-        commentInputAvatar.classList.remove('comment-avatar--user', 'comment-avatar--admin');
-        commentInputAvatar.classList.add(isUserAdmin ? 'comment-avatar--admin' : 'comment-avatar--user');
-      }
-    } else {
-      authSection.innerHTML = `
-        <button type="button" class="btn-auth btn-auth--login" id="loginBtn">
-          <i class="fa-solid fa-right-to-bracket"></i>
-          Login
-        </button>
-      `;
-
-      // Add login listener - explicitly pass false to show login form
-      document.getElementById('loginBtn')?.addEventListener('click', () => openAuthModal(false));
-      
-      // Reset comment input avatar to default icon
-      const commentInputAvatar = document.getElementById('commentInputAvatar');
-      if (commentInputAvatar) {
-        commentInputAvatar.innerHTML = '<i class="fa-solid fa-user"></i>';
-        commentInputAvatar.classList.remove('comment-avatar--user', 'comment-avatar--admin');
-      }
-    }
-
-    // Show auth section after content is ready
-    authSection.style.visibility = 'visible';
-    
-    updateCommentInputState();
+  const escapeHtml = (text) => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   };
 
-  const MAX_COMMENT_LENGTH = 500;
+  const isAdmin = (username) => username?.toLowerCase() === 'admin';
 
+  // ========== Comment Input State ==========
   const updateCommentInputState = () => {
     if (!commentInput || !submitCommentBtn) return;
 
@@ -147,230 +79,18 @@ document.addEventListener('DOMContentLoaded', () => {
     submitCommentBtn.disabled = !hasContent || !currentUser || length > MAX_COMMENT_LENGTH;
   };
 
-  // ========== Modal Functions ==========
-  const openAuthModal = (showRegister = false) => {
-    if (!authModal) return;
-    
-    authModal.classList.add('is-open');
-    authModal.setAttribute('aria-hidden', 'false');
-    
-    if (showRegister) {
-      showRegisterForm();
+  const updateCommentInputAvatar = () => {
+    const commentInputAvatar = document.getElementById('commentInputAvatar');
+    if (!commentInputAvatar) return;
+
+    if (currentUser) {
+      const isUserAdmin = isAdmin(currentUser.username);
+      commentInputAvatar.innerHTML = getInitials(currentUser.username);
+      commentInputAvatar.classList.remove('comment-avatar--user', 'comment-avatar--admin');
+      commentInputAvatar.classList.add(isUserAdmin ? 'comment-avatar--admin' : 'comment-avatar--user');
     } else {
-      showLoginForm();
-    }
-  };
-
-  const closeAuthModal = () => {
-    if (!authModal) return;
-    
-    authModal.classList.remove('is-open');
-    authModal.setAttribute('aria-hidden', 'true');
-    
-    // Reset forms
-    loginForm?.reset();
-    registerForm?.reset();
-    clearFormErrors();
-  };
-
-  const showLoginForm = () => {
-    loginForm.style.display = 'block';
-    registerForm.style.display = 'none';
-    authModalTitle.textContent = 'Login';
-    clearFormErrors();
-  };
-
-  const showRegisterForm = () => {
-    loginForm.style.display = 'none';
-    registerForm.style.display = 'block';
-    authModalTitle.textContent = 'Sign Up';
-    clearFormErrors();
-  };
-
-  const clearFormErrors = () => {
-    document.querySelectorAll('.form-error').forEach(el => {
-      // Keep the space to maintain height, except for general error
-      if (el.classList.contains('form-error--general')) {
-        el.textContent = '';
-      } else {
-        el.innerHTML = '&nbsp;';
-      }
-    });
-  };
-
-  // ========== Auth Functions ==========
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    clearFormErrors();
-
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-
-    // Validation
-    let hasError = false;
-
-    if (!username) {
-      document.getElementById('loginUsernameError').textContent = 'Username is required';
-      hasError = true;
-    } else if (username.length < 3) {
-      document.getElementById('loginUsernameError').textContent = 'Username must be at least 3 characters';
-      hasError = true;
-    }
-
-    if (!password) {
-      document.getElementById('loginPasswordError').textContent = 'Password is required';
-      hasError = true;
-    } else if (password.length < 6) {
-      document.getElementById('loginPasswordError').textContent = 'Password must be at least 6 characters';
-      hasError = true;
-    }
-
-    if (hasError) return;
-
-    // Show loading state
-    const loginSubmitBtn = document.getElementById('loginSubmitBtn');
-    const originalBtnText = loginSubmitBtn.innerHTML;
-    loginSubmitBtn.disabled = true;
-    loginSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        document.getElementById('loginGeneralError').textContent = data.error || 'Login failed';
-        return;
-      }
-
-      // Success - save token and reload page
-      setToken(data.token);
-      setStoredUser(data.user);
-      window.location.href = '/feedback';
-    } catch (error) {
-      console.error('Login error:', error);
-      document.getElementById('loginGeneralError').textContent = 'An error occurred. Please try again.';
-    } finally {
-      // Restore button state
-      loginSubmitBtn.disabled = false;
-      loginSubmitBtn.innerHTML = originalBtnText;
-    }
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    clearFormErrors();
-
-    const username = document.getElementById('registerUsername').value.trim();
-    const password = document.getElementById('registerPassword').value;
-    const confirmPassword = document.getElementById('registerConfirmPassword').value;
-
-    // Validation
-    let hasError = false;
-
-    if (!username) {
-      document.getElementById('registerUsernameError').textContent = 'Username is required';
-      hasError = true;
-    } else if (username.length < 3) {
-      document.getElementById('registerUsernameError').textContent = 'Username must be at least 3 characters';
-      hasError = true;
-    } else if (username.length > 50) {
-      document.getElementById('registerUsernameError').textContent = 'Username must be at most 50 characters';
-      hasError = true;
-    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      document.getElementById('registerUsernameError').textContent = 'Username can only contain letters, numbers, and underscores';
-      hasError = true;
-    }
-
-    if (!password) {
-      document.getElementById('registerPasswordError').textContent = 'Password is required';
-      hasError = true;
-    } else if (password.length < 6) {
-      document.getElementById('registerPasswordError').textContent = 'Password must be at least 6 characters';
-      hasError = true;
-    }
-
-    if (!confirmPassword) {
-      document.getElementById('registerConfirmPasswordError').textContent = 'Please confirm your password';
-      hasError = true;
-    } else if (password !== confirmPassword) {
-      document.getElementById('registerConfirmPasswordError').textContent = 'Passwords do not match';
-      hasError = true;
-    }
-
-    if (hasError) return;
-
-    // Show loading state
-    const registerSubmitBtn = document.getElementById('registerSubmitBtn');
-    const originalBtnText = registerSubmitBtn.innerHTML;
-    registerSubmitBtn.disabled = true;
-    registerSubmitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        document.getElementById('registerGeneralError').textContent = data.error || 'Registration failed';
-        return;
-      }
-
-      // Success - save token and reload page
-      setToken(data.token);
-      setStoredUser(data.user);
-      window.location.href = '/feedback';
-    } catch (error) {
-      console.error('Register error:', error);
-      document.getElementById('registerGeneralError').textContent = 'An error occurred. Please try again.';
-    } finally {
-      // Restore button state
-      registerSubmitBtn.disabled = false;
-      registerSubmitBtn.innerHTML = originalBtnText;
-    }
-  };
-
-  const handleLogout = () => {
-    removeToken();
-    removeStoredUser();
-    currentUser = null;
-    // Reload the page to reset state
-    window.location.href = '/feedback';
-  };
-
-  const verifyToken = async () => {
-    const token = getToken();
-    if (!token) {
-      currentUser = null;
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        currentUser = data.user;
-        setStoredUser(data.user);
-      } else {
-        // Token invalid
-        removeToken();
-        removeStoredUser();
-        currentUser = null;
-      }
-    } catch (error) {
-      console.error('Token verification error:', error);
-      currentUser = getStoredUser();
+      commentInputAvatar.innerHTML = '<i class="fa-solid fa-user"></i>';
+      commentInputAvatar.classList.remove('comment-avatar--user', 'comment-avatar--admin');
     }
   };
 
@@ -491,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ========== Edit/Delete Modal Functions ==========
   let editingCommentId = null;
-  let editingComment = null; // Store full comment object for UI update
+  let editingComment = null;
   let deletingCommentId = null;
 
   const createEditModal = () => {
@@ -571,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     editingCommentId = comment.id;
-    editingComment = comment; // Store full comment for later update
+    editingComment = comment;
     const textarea = document.getElementById('editCommentInput');
     textarea.value = comment.content;
     updateEditCharCounter();
@@ -675,19 +395,16 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update UI directly without reload
       const commentEl = document.querySelector(`.comment-item[data-comment-id="${commentId}"]`);
       if (commentEl) {
-        // Update the comment text
         const commentText = commentEl.querySelector('.comment-text');
         if (commentText) {
           commentText.textContent = content;
         }
         
-        // Add (Edited) tag if not already present
         const commentTime = commentEl.querySelector('.comment-time');
         if (commentTime && !commentTime.querySelector('.comment-edited')) {
           commentTime.innerHTML = formatTime(editingComment.created_at) + ' <span class="comment-edited">(Edited)</span>';
         }
         
-        // Update stored comment data for future edits
         if (editingComment) {
           editingComment.content = content;
           editingComment.updated_at = data.comment?.updated_at || new Date().toISOString();
@@ -730,10 +447,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Update UI directly without reload
       const commentEl = document.querySelector(`.comment-item[data-comment-id="${commentId}"]`);
       if (commentEl) {
-        // Animate removal
         commentEl.style.transition = 'opacity 0.3s, transform 0.3s';
         commentEl.style.opacity = '0';
         commentEl.style.transform = 'translateX(-20px)';
@@ -741,11 +456,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           commentEl.remove();
           
-          // Update comment count
           const currentCount = parseInt(commentsCount.textContent.replace(/[()]/g, '')) || 0;
           commentsCount.textContent = `(${Math.max(0, currentCount - 1)})`;
           
-          // Show empty message if no comments left
           const remainingComments = commentsList.querySelectorAll('.comment-item');
           if (remainingComments.length === 0) {
             commentsEmpty.style.display = 'block';
@@ -765,19 +478,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const escapeHtml = (text) => {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  };
-
   const submitComment = async () => {
     const content = commentInput.value.trim();
     if (!content || !currentUser) return;
 
     const token = getToken();
     if (!token) {
-      openAuthModal();
+      // Use shared auth module
+      if (window.CAN_Auth) {
+        window.CAN_Auth.openAuthModal('login');
+      }
       return;
     }
 
@@ -816,27 +526,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ========== Event Listeners ==========
   
-  // Auth modal triggers
-  loginBtn?.addEventListener('click', () => openAuthModal(false));
-  
-  closeTriggers?.forEach(trigger => {
-    trigger.addEventListener('click', closeAuthModal);
-  });
-
-  // Switch between login/register
-  showRegisterBtn?.addEventListener('click', showRegisterForm);
-  showLoginBtn?.addEventListener('click', showLoginForm);
-
-  // Form submissions
-  loginForm?.addEventListener('submit', handleLogin);
-  registerForm?.addEventListener('submit', handleRegister);
-
   // Comment input
   commentInput?.addEventListener('input', updateCommentInputState);
   
   commentInput?.addEventListener('focus', () => {
-    if (!currentUser) {
-      openAuthModal();
+    if (!currentUser && window.CAN_Auth) {
+      window.CAN_Auth.openAuthModal('login');
     }
   });
 
@@ -845,18 +540,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load more comments
   loadMoreBtn?.addEventListener('click', () => loadComments(false));
 
-  // Escape key to close modal
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && authModal?.classList.contains('is-open')) {
-      closeAuthModal();
-    }
-  });
-
   // ========== Initialize ==========
   const init = async () => {
-    // Check for existing token
-    await verifyToken();
-    updateAuthUI();
+    // Wait for CAN_Auth to be fully initialized
+    if (window.CAN_Auth && window.CAN_Auth.waitForAuth) {
+      await window.CAN_Auth.waitForAuth();
+    }
+    
+    // Get user from shared auth module
+    if (window.CAN_Auth && window.CAN_Auth.isLoggedIn()) {
+      currentUser = window.CAN_Auth.getCurrentUser();
+    }
+    
+    // Update comment input avatar based on user
+    updateCommentInputAvatar();
+    updateCommentInputState();
     
     // Load comments
     await loadComments(true);

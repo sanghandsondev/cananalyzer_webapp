@@ -104,3 +104,61 @@ body {
 .btn-home:hover {
   background-color: #0056b3;
 }
+
+.license-info-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  margin: 20px auto;
+  max-width: 500px;
+  background: linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 100%);
+  border: 1px solid #1f6feb;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.license-info-box i {
+  font-size: 24px;
+  color: #1f6feb;
+  flex-shrink: 0;
+}
+
+.license-info-box p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.license-info-box a {
+  color: #1f6feb;
+  text-decoration: none;
+}
+
+.license-info-box a:hover {
+  text-decoration: underline;
+}
+
+.support-info {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.support-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+  text-align: left;
+}
+
+.support-text i {
+  color: #6c757d;
+  margin-top: 2px;
+  flex-shrink: 0;
+}

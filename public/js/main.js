@@ -35,53 +35,69 @@ document.addEventListener('DOMContentLoaded', () => {
   const buyNowButtons = document.querySelectorAll('.pricing-card__btn');
   const closeTriggers = modal?.querySelectorAll('[data-close="true"]');
   const paymentForm = document.getElementById('paymentForm');
-  const emailInput = document.getElementById('emailInput');
-  const emailError = document.getElementById('emailError');
   const submitPaymentBtn = document.getElementById('submitPaymentBtn');
   const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
   const productNameEl = document.getElementById('productName');
   const productPriceEl = document.getElementById('productPrice');
+  
+  // Auth-related elements
+  const loginRequiredNotice = document.getElementById('loginRequiredNotice');
+  const paymentFormContainer = document.getElementById('paymentFormContainer');
+  const loginToPayBtn = document.getElementById('loginToPayBtn');
+  const signupToPayBtn = document.getElementById('signupToPayBtn');
+  const paymentUserAvatar = document.getElementById('paymentUserAvatar');
+  const paymentUserName = document.getElementById('paymentUserName');
+  const paymentUserEmail = document.getElementById('paymentUserEmail');
 
   let currentProduct = null;
 
+  function getInitials(username) {
+    return username ? username.substring(0, 2).toUpperCase() : 'U';
+  }
+
+  function updatePaymentModalUI() {
+    const isLoggedIn = window.CAN_Auth && window.CAN_Auth.isLoggedIn();
+    const user = isLoggedIn ? window.CAN_Auth.getCurrentUser() : null;
+
+    if (isLoggedIn && user) {
+      // Show payment form
+      loginRequiredNotice.style.display = 'none';
+      paymentFormContainer.style.display = 'block';
+
+      // Update user info
+      paymentUserAvatar.textContent = getInitials(user.username);
+      paymentUserName.textContent = user.username;
+      paymentUserEmail.textContent = user.email || '';
+
+      // Check if user is admin
+      if (user.username.toLowerCase() === 'admin') {
+        paymentUserAvatar.classList.add('user-avatar--admin');
+      } else {
+        paymentUserAvatar.classList.remove('user-avatar--admin');
+      }
+    } else {
+      // Show login required notice
+      loginRequiredNotice.style.display = 'block';
+      paymentFormContainer.style.display = 'none';
+    }
+  }
+
   function openModal() {
+    updatePaymentModalUI();
     modal?.classList.add('is-open');
     modal?.setAttribute('aria-hidden', 'false');
-    emailInput?.focus();
   }
 
   function closeModal() {
     modal?.classList.remove('is-open');
     modal?.setAttribute('aria-hidden', 'true');
-    emailInput.value = '';
-    emailError.textContent = '';
     paymentMethodRadios.forEach(radio => radio.checked = false);
     updateSubmitButtonState();
   }
 
-  function validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(String(email).toLowerCase());
-  }
-
   function updateSubmitButtonState() {
-    const isEmailValid = validateEmail(emailInput?.value || '');
     const isPaymentMethodSelected = Array.from(paymentMethodRadios).some(radio => radio.checked);
-
-    submitPaymentBtn.disabled = !(isEmailValid && isPaymentMethodSelected);
-  }
-
-  function handleEmailValidation() {
-    const email = emailInput?.value || '';
-    
-    if (email === '') {
-      emailError.textContent = '';
-    } else if (!validateEmail(email)) {
-      emailError.textContent = 'Please enter a valid email address.';
-    } else {
-      emailError.textContent = '';
-    }
-    updateSubmitButtonState();
+    submitPaymentBtn.disabled = !isPaymentMethodSelected;
   }
 
   // Open modal when clicking Buy Now buttons
@@ -114,8 +130,20 @@ document.addEventListener('DOMContentLoaded', () => {
     trigger.addEventListener('click', closeModal);
   });
 
-  // Email input validation
-  emailInput?.addEventListener('input', handleEmailValidation);
+  // Login/Signup buttons in payment modal
+  loginToPayBtn?.addEventListener('click', () => {
+    closeModal();
+    if (window.CAN_Auth) {
+      window.CAN_Auth.openAuthModal('login');
+    }
+  });
+
+  signupToPayBtn?.addEventListener('click', () => {
+    closeModal();
+    if (window.CAN_Auth) {
+      window.CAN_Auth.openAuthModal('register');
+    }
+  });
 
   // Payment method selection
   paymentMethodRadios?.forEach(radio => {
@@ -126,20 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
   paymentForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const email = emailInput?.value.trim();
+    // Check if user is logged in
+    if (!window.CAN_Auth || !window.CAN_Auth.isLoggedIn()) {
+      alert("Please login to continue with your purchase.");
+      return;
+    }
+
+    const user = window.CAN_Auth.getCurrentUser();
     const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-
-    emailError.textContent = "";
-
-    if (!email) {
-      emailError.textContent = "Email is required.";
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      emailError.textContent = "Please enter a valid email address.";
-      return;
-    }
 
     if (!paymentMethod) {
       alert("Please select a payment method.");
@@ -151,17 +173,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (!user.email) {
+      alert("Your account does not have an email address. Please update your profile.");
+      return;
+    }
+
     try {
       submitPaymentBtn.disabled = true;
       submitPaymentBtn.textContent = "Processing...";
 
+      const token = window.CAN_Auth.getToken();
+
       const response = await fetch("/api/pay", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
-          email,
           productName: currentProduct.name,
           productPrice: currentProduct.price,
           paymentMethod,

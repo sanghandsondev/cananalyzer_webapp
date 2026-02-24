@@ -6,6 +6,7 @@
     <title>Feedback - CAN Analyzer</title>
     <link rel="icon" href="/assets/favicons/favicon.png" type="image/png" />
     <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/auth.css" />
     <link rel="stylesheet" href="/css/feedback.css" />
     <!-- Font Awesome -->
     <link
@@ -13,6 +14,14 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
       referrerpolicy="no-referrer"
     />
+    <style>
+      /* Simple header layout: brand left, auth right */
+      .site-header__container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+    </style>
   </head>
   <body>
     <!-- Header with auth -->
@@ -25,10 +34,8 @@
           <span class="brand__text">CAN Analyzer</span>
         </a>
 
-        <!-- Right side - Auth section (hidden until JS loads) -->
-        <div class="site-header__auth" id="authSection" style="visibility: hidden;">
-          <!-- Will be populated by JS based on login state -->
-        </div>
+        <!-- Right side - Auth section -->
+        <div class="site-header__auth" id="authSection" style="visibility: hidden;"></div>
       </div>
     </header>
 
@@ -92,138 +99,13 @@
       </div>
     </main>
 
-    <!-- Auth Modal -->
-    <div id="authModal" class="modal" aria-hidden="true">
-      <div class="modal__overlay" data-close="true"></div>
-
-      <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
-        <div class="modal__header">
-          <h3 id="authModalTitle" class="modal__title">Login</h3>
-          <button type="button" class="modal__close" aria-label="Close" data-close="true">×</button>
-        </div>
-
-        <div class="modal__body">
-          <!-- Login Form -->
-          <form id="loginForm" class="auth-form" novalidate>
-            <div class="form-group">
-              <label for="loginUsername">Username<span class="required-mark">*</span></label>
-              <input 
-                type="text" 
-                id="loginUsername" 
-                name="username" 
-                class="form-control" 
-                placeholder="Enter your username ..." 
-                required 
-                minlength="3"
-                maxlength="50"
-              />
-              <div class="form-error" id="loginUsernameError">&nbsp;</div>
-            </div>
-
-            <div class="form-group">
-              <div class="label-row">
-                <label for="loginPassword">Password<span class="required-mark">*</span></label>
-                <small class="form-hint-inline">Minimum 6 characters</small>
-              </div>
-              <input 
-                type="password" 
-                id="loginPassword" 
-                name="password" 
-                class="form-control" 
-                placeholder="Enter your password ..." 
-                required 
-                minlength="6"
-              />
-              <div class="form-error" id="loginPasswordError">&nbsp;</div>
-            </div>
-
-            <div class="form-error form-error--general" id="loginGeneralError"></div>
-
-            <div class="modal__footer">
-              <button type="submit" class="btn btn--primary" id="loginSubmitBtn">
-                Login
-              </button>
-            </div>
-
-            <div class="auth-switch">
-              <span>Don't have an account?</span>
-              <button type="button" class="auth-switch__link" id="showRegisterBtn">Sign Up</button>
-            </div>
-          </form>
-
-          <!-- Register Form -->
-          <form id="registerForm" class="auth-form" style="display: none;" novalidate>
-            <div class="form-group">
-              <div class="label-row">
-                <label for="registerUsername">Username<span class="required-mark">*</span></label>
-                <small class="form-hint-inline">3-50 characters</small>
-              </div>
-              <input 
-                type="text" 
-                id="registerUsername" 
-                name="username" 
-                class="form-control" 
-                placeholder="Choose a username..." 
-                required 
-                minlength="3"
-                maxlength="50"
-              />
-              <div class="form-error" id="registerUsernameError">&nbsp;</div>
-            </div>
-
-            <div class="form-group">
-              <div class="label-row">
-                <label for="registerPassword">Password<span class="required-mark">*</span></label>
-                <small class="form-hint-inline">Minimum 6 characters</small>
-              </div>
-              <input 
-                type="password" 
-                id="registerPassword" 
-                name="password" 
-                class="form-control" 
-                placeholder="Choose a password..." 
-                required 
-                minlength="6"
-              />
-              <div class="form-error" id="registerPasswordError">&nbsp;</div>
-            </div>
-
-            <div class="form-group">
-              <label for="registerConfirmPassword">Confirm Password<span class="required-mark">*</span></label>
-              <input 
-                type="password" 
-                id="registerConfirmPassword" 
-                name="confirmPassword" 
-                class="form-control" 
-                placeholder="Confirm your password..." 
-                required 
-              />
-              <div class="form-error" id="registerConfirmPasswordError">&nbsp;</div>
-            </div>
-
-            <div class="form-error form-error--general" id="registerGeneralError"></div>
-
-            <div class="modal__footer">
-              <button type="submit" class="btn btn--primary" id="registerSubmitBtn">
-                Sign Up
-              </button>
-            </div>
-
-            <div class="auth-switch">
-              <span>Already have an account?</span>
-              <button type="button" class="auth-switch__link" id="showLoginBtn">Login</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
     <footer class="site-footer">
       <div class="site-footer__container">
         <p class="site-footer__text">© 2026 CAN Analyzer, Inc.</p>
       </div>
     </footer>
 
+    <script src="/js/auth.js"></script>
     <script src="/js/feedback.js"></script>
   </body>
 </html>

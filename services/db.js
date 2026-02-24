@@ -10,69 +10,100 @@ const pool = new Pool({
 const initializeDatabase = async () => {
   const client = await pool.connect();
   try {
-    // Create paypal_orders table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS paypal_orders (
-        id SERIAL PRIMARY KEY,
-        orderId TEXT UNIQUE,
-        email TEXT,
-        productName TEXT,
-        productPrice NUMERIC(10, 2),
-        currency TEXT DEFAULT 'USD',
-        status TEXT,
-        licenseStatus TEXT DEFAULT 'NOT_CREATED',
-        payerId TEXT,
-        payerEmail TEXT,
-        payerGivenName TEXT,
-        payerSurname TEXT,
-        payerCountryCode TEXT,
-        webhookEventType TEXT,
-        webhookResourceType TEXT,
-        webhookResourceVersion TEXT,
-        webhookSummary TEXT,
-        createdAt TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    console.log('Table "paypal_orders" is ready.');
+    // ========== DROP OLD TABLES (one-time migration) ==========
+    // Uncomment below lines if you need to recreate tables
+    // await client.query(`DROP TABLE IF EXISTS licenses CASCADE`);
+    // await client.query(`DROP TABLE IF EXISTS orders CASCADE`);
+    // await client.query(`DROP TABLE IF EXISTS comments CASCADE`);
+    // await client.query(`DROP TABLE IF EXISTS users CASCADE`);
 
-    // Create feedback_users table for authentication (separate from any existing users table)
+    // ========== USERS TABLE ==========
+    // Main user table for authentication
     await client.query(`
-      CREATE TABLE IF NOT EXISTS feedback_users (
+      CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(50) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        is_verified BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    console.log('Table "feedback_users" is ready.');
+    console.log('Table "users" is ready.');
 
-    // Create feedback_comments table for feedback
+    // ========== COMMENTS TABLE ==========
+    // User feedback/comments
     await client.query(`
-      CREATE TABLE IF NOT EXISTS feedback_comments (
+      CREATE TABLE IF NOT EXISTS comments (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES feedback_users(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         content TEXT NOT NULL,
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT NULL
       )
     `);
-    console.log('Table "feedback_comments" is ready.');
+    console.log('Table "comments" is ready.');
 
-    // Add updated_at column if it doesn't exist (for existing tables)
+    // ========== ORDERS TABLE ==========
+    // PayPal orders - using snake_case (PostgreSQL convention)
     await client.query(`
-      ALTER TABLE feedback_comments 
-      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NULL
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        order_id TEXT UNIQUE NOT NULL,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        email TEXT,
+        product_name TEXT NOT NULL,
+        product_price NUMERIC(10, 2) NOT NULL,
+        currency TEXT DEFAULT 'USD',
+        status TEXT DEFAULT 'CREATED',
+        license_status TEXT DEFAULT 'NOT_CREATED',
+        payer_id TEXT,
+        payer_email TEXT,
+        payer_given_name TEXT,
+        payer_surname TEXT,
+        payer_country_code TEXT,
+        webhook_event_type TEXT,
+        webhook_resource_type TEXT,
+        webhook_resource_version TEXT,
+        webhook_summary TEXT,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Table "orders" is ready.');
+
+    // ========== LICENSES TABLE ==========
+    // Purchased licenses linked to users
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS licenses (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        order_id TEXT REFERENCES orders(order_id) ON DELETE SET NULL,
+        product_name VARCHAR(100) NOT NULL,
+        license_key VARCHAR(255),
+        purchased_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMPTZ,
+        status VARCHAR(20) DEFAULT 'active'
+      )
+    `);
+    console.log('Table "licenses" is ready.');
+
+    // ========== INDEXES ==========
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_comments_created_at ON comments(created_at DESC)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_licenses_user_id ON licenses(user_id)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id)
     `);
 
-    // Create index on comments for faster queries
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_feedback_comments_created_at ON feedback_comments(created_at DESC)
-    `);
-
-    console.log('Connected to PostgreSQL and all tables are ready.');
+    console.log('Database initialized successfully.');
   } catch (err) {
-    console.error('Error initializing database', err.stack);
-    // Exit the process if DB initialization fails
+    console.error('Error initializing database:', err.stack);
     process.exit(1);
   } finally {
     client.release();

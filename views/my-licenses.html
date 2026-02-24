@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Licenses - CAN Analyzer</title>
+  <link rel="icon" href="/assets/favicons/favicon.png" type="image/png" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/auth.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    .licenses-section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .licenses-header {
+      margin-bottom: 32px;
+    }
+    .licenses-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: rgba(17, 24, 39, 0.9);
+      margin-bottom: 8px;
+    }
+    .licenses-subtitle {
+      font-size: 16px;
+      color: rgba(17, 24, 39, 0.6);
+    }
+    .licenses-loading,
+    .licenses-empty,
+    .licenses-login-required {
+      text-align: center;
+      padding: 60px 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+    .licenses-loading i,
+    .licenses-empty i,
+    .licenses-login-required i {
+      font-size: 48px;
+      color: rgba(17, 24, 39, 0.3);
+      margin-bottom: 16px;
+    }
+    .licenses-loading p,
+    .licenses-empty p,
+    .licenses-login-required p {
+      font-size: 16px;
+      color: rgba(17, 24, 39, 0.6);
+    }
+    .licenses-grid {
+      display: grid;
+      gap: 20px;
+    }
+    .license-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+    .license-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #1f6feb 0%, #3b82f6 100%);
+      color: #fff;
+    }
+    .license-card__product {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .license-card__icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .license-card__name {
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .license-card__status {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .license-card__status--active {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+    .license-card__status--expired {
+      background: rgba(220, 53, 69, 0.2);
+      color: #fee2e2;
+    }
+    .license-card__body {
+      padding: 10px 20px;
+    }
+    .license-card__key {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(17, 24, 39, 0.04);
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .license-card__key-label {
+      font-size: 14px;
+      color: rgba(17, 24, 39, 0.5);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .license-card__key-value {
+      font-family: monospace;
+      font-size: 16px;
+      color: rgba(17, 24, 39, 0.85);
+      word-break: break-all;
+    }
+    .license-card__copy-btn {
+      margin-left: auto;
+      padding: 6px 12px;
+      background: #1f6feb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 150ms ease;
+    }
+    .license-card__copy-btn:hover {
+      background: #1557c0;
+    }
+    .license-card__details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .license-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .license-detail__label {
+      font-size: 12px;
+      color: rgba(17, 24, 39, 0.5);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .license-detail__value {
+      font-size: 14px;
+      color: rgba(17, 24, 39, 0.85);
+    }
+    .license-detail__value--expired {
+      color: #dc3545;
+    }
+    .login-btn-container {
+      margin-top: 20px;
+    }
+    /* Simple header layout: brand left, auth right */
+    .site-header__container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header" role="banner">
+    <div class="site-header__container">
+      <a class="brand" href="/" aria-label="CAN Analyzer home">
+        <span class="brand__mark" aria-hidden="true">
+          <img class="brand__logo" src="/assets/brand/logo-gear.png" alt="" />
+        </span>
+        <span class="brand__text">CAN Analyzer</span>
+      </a>
+
+      <!-- Right side - Auth section -->
+      <div class="site-header__auth" id="authSection" style="visibility: hidden;"></div>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="licenses-section">
+      <div id="licensesContent">
+        <div class="licenses-loading" id="licensesLoading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Loading your licenses...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__container">
+      <p class="site-footer__text">© 2026 CAN Analyzer, Inc.</p>
+    </div>
+  </footer>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Wait for auth to be fully initialized
+      if (window.CAN_Auth && window.CAN_Auth.waitForAuth) {
+        await window.CAN_Auth.waitForAuth();
+      }
+
+      const licensesContent = document.getElementById('licensesContent');
+
+      if (!CAN_Auth.isLoggedIn()) {
+        licensesContent.innerHTML = `
+          <div class="licenses-login-required">
+            <i class="fa-solid fa-lock"></i>
+            <p>Please login to view your licenses</p>
+            <div class="login-btn-container">
+              <button type="button" class="btn btn--primary" onclick="CAN_Auth.openAuthModal('login')">
+                Login
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        const token = CAN_Auth.getToken();
+        const response = await fetch('/api/user/licenses', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch licenses');
+        }
+
+        const data = await response.json();
+        const licenses = data.licenses || [];
+
+        if (licenses.length === 0) {
+          licensesContent.innerHTML = `
+            <div class="licenses-empty">
+              <i class="fa-solid fa-key"></i>
+              <p>You don't have any licenses yet</p>
+              <div class="login-btn-container">
+                <a href="/#pricing" class="btn btn--primary">Browse Products</a>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        const formatDate = (dateStr) => {
+          if (!dateStr) return 'N/A';
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        };
+
+        const isExpired = (dateStr) => {
+          if (!dateStr) return false;
+          return new Date(dateStr) < new Date();
+        };
+
+        const getProductIcon = (productName) => {
+          const name = productName?.toLowerCase() || '';
+          if (name.includes('cbcm')) return 'fa-car';
+          return 'fa-microchip';
+        };
+
+        licensesContent.innerHTML = `
+          <div class="licenses-grid">
+            ${licenses.map(license => `
+              <div class="license-card">
+                <div class="license-card__header">
+                  <div class="license-card__product">
+                    <div class="license-card__icon">
+                      <i class="fa-solid ${getProductIcon(license.productName)}"></i>
+                    </div>
+                    <span class="license-card__name">${license.productName || 'Unknown Product'}</span>
+                  </div>
+                  <span class="license-card__status ${isExpired(license.expiresAt) ? 'license-card__status--expired' : 'license-card__status--active'}">
+                    ${isExpired(license.expiresAt) ? 'Expired' : license.status || 'Active'}
+                  </span>
+                </div>
+                <div class="license-card__body">
+                  ${license.licenseKey ? `
+                    <div class="license-card__key">
+                      <div>
+                        <div class="license-card__key-value">${license.licenseKey}</div>
+                      </div>
+                    </div>
+                  ` : ''}
+                  <div class="license-card__details">
+                    <div class="license-detail">
+                      <span class="license-detail__label">Purchased</span>
+                      <span class="license-detail__value">${formatDate(license.purchasedAt)}</span>
+                    </div>
+                    ${license.productprice ? `
+                      <div class="license-detail">
+                        <span class="license-detail__label">Price</span>
+                        <span class="license-detail__value">$${parseFloat(license.productprice).toFixed(2)} ${license.currency || 'USD'}</span>
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error loading licenses:', error);
+        licensesContent.innerHTML = `
+          <div class="licenses-empty">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            <p>Failed to load licenses. Please try again later.</p>
+          </div>
+        `;
+      }
+    });
+
+    function copyToClipboard(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

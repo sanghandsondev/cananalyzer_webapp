@@ -120,8 +120,9 @@
   margin: 6px 0;
 }
 
-/* Buttons */
-.btn {
+/* Buttons (index page specific - for pricing cards) */
+.pricing-card .btn--primary,
+.btn-download {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -133,63 +134,39 @@
   cursor: pointer;
 }
 
-.btn--primary {
+.pricing-card .btn--primary {
   width: 100%;
   background: #1f6feb;
   color: #fff;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 10px 20px rgba(31, 111, 235, 0.25);
 }
 
-.btn--primary:hover {
+.pricing-card .btn--primary:hover {
   filter: brightness(0.98);
 }
 
-.btn--primary:disabled {
+.pricing-card .btn--primary:disabled {
   background: #a0aec0;
   cursor: not-allowed;
   box-shadow: none;
   filter: none;
 }
 
-.btn--primary:active {
+.pricing-card .btn--primary:active {
   transform: translateY(1px);
 }
 
-.btn:focus-visible {
+.pricing-card .btn:focus-visible {
   outline: 3px solid rgba(31, 111, 235, 0.35);
   outline-offset: 3px;
 }
 
-/* Modal */
-.modal {
-  position: fixed;
-  inset: 0;
-  display: none;
-  z-index: 1000;
-}
-
-.modal.is-open {
-  display: block;
-}
-
-.modal__overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(17, 24, 39, 0.55);
-}
-
-.modal__dialog {
-  position: relative;
+/* Payment Modal (specific styles) */
+#paymentModal .modal__dialog {
   width: min(520px, calc(100% - 32px));
-  margin: 12vh auto 0;
-  background: #fff;
-  border-radius: 16px;
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  box-shadow: 0 18px 60px rgba(17, 24, 39, 0.28);
-  overflow: hidden;
 }
 
-.modal__header {
+#paymentModal .modal__header {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -198,14 +175,14 @@
   border-bottom: 1px solid rgba(17, 24, 39, 0.08);
 }
 
-.modal__title {
+#paymentModal .modal__title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
   text-align: center;
 }
 
-.modal__close {
+#paymentModal .modal__close {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -221,19 +198,9 @@
   color: rgba(17, 24, 39, 0.6);
 }
 
-.modal__close:hover {
+#paymentModal .modal__close:hover {
   background: rgba(17, 24, 39, 0.06);
   color: rgba(17, 24, 39, 0.9);
-}
-
-.modal__body {
-  padding: 24px;
-}
-
-.modal__footer {
-  margin-top: 20px;
-  padding-top: 0;
-  border-top: none;
 }
 
 /* Product Information */
@@ -258,25 +225,19 @@
   color: rgba(17, 24, 39, 0.92);
 }
 
-/* Required field marker */
-.required-mark {
-  color: #dc3545;
-  margin-left: 2px;
-  font-weight: 700;
-}
-
-.form-group {
+/* Payment Modal Form Styles */
+#paymentModal .form-group {
   margin-bottom: 8px;
 }
 
-.form-group label {
+#paymentModal .form-group label {
   display: block;
   font-weight: 600;
   margin-bottom: 8px;
   font-size: 15px;
 }
 
-.form-control {
+#paymentModal .form-control {
   width: 100%;
   height: 44px;
   padding: 0 12px;
@@ -286,7 +247,7 @@
   box-sizing: border-box;
 }
 
-.form-control:focus {
+#paymentModal .form-control:focus {
   outline: 3px solid rgba(31, 111, 235, 0.25);
   outline-offset: 0;
   border-color: #1f6feb;
@@ -300,7 +261,7 @@
   color: rgba(17, 24, 39, 0.65);
 }
 
-.form-error {
+#paymentModal .form-error {
   display: block;
   min-height: 20px;
   margin-top: 6px;
@@ -310,10 +271,139 @@
   line-height: 1.4;
 }
 
-.modal__hint {
+#paymentModal .modal__hint {
   margin: 0 0 12px;
   font-weight: 600;
   font-size: 15px;
+}
+
+#paymentModal .modal__hint--note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(31, 111, 235, 0.06);
+  border: 1px solid rgba(31, 111, 235, 0.12);
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  color: rgba(17, 24, 39, 0.75);
+  margin-bottom: 20px;
+}
+
+#paymentModal .modal__hint--note i {
+  color: #1f6feb;
+  margin-top: 1px;
+}
+
+/* Login Required Notice */
+.login-required-notice {
+  text-align: center;
+  padding: 20px;
+}
+
+.login-required-notice__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: rgba(31, 111, 235, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-required-notice__icon i {
+  font-size: 28px;
+  color: #1f6feb;
+}
+
+.login-required-notice__title {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 600;
+  color: rgba(17, 24, 39, 0.92);
+}
+
+.login-required-notice__text {
+  margin: 0 0 24px;
+  font-size: 15px;
+  color: rgba(17, 24, 39, 0.7);
+  line-height: 1.6;
+}
+
+.login-required-notice .btn {
+  margin-bottom: 16px;
+}
+
+.login-required-notice__signup {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(17, 24, 39, 0.65);
+}
+
+.login-required-notice__signup .auth-switch__link {
+  background: none;
+  border: none;
+  color: #1f6feb;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+}
+
+.login-required-notice__signup .auth-switch__link:hover {
+  text-decoration: underline;
+}
+
+/* User Payment Info */
+.user-payment-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: rgba(17, 24, 39, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.user-payment-info__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1f6feb 0%, #1557c0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.user-payment-info__avatar.user-avatar--admin {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+}
+
+.user-payment-info__details {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-payment-info__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(17, 24, 39, 0.92);
+  margin-bottom: 4px;
+}
+
+.user-payment-info__email {
+  font-size: 13px;
+  color: rgba(17, 24, 39, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .payment-options {
@@ -354,7 +444,7 @@
   border: 2px solid rgba(17, 24, 39, 0.12);
   border-radius: 10px;
   cursor: pointer;
-  transition: all 180ms ease;
+  transition: all 500ms ease;
   box-sizing: border-box;
   position: relative;
 }
@@ -384,7 +474,7 @@
 .payment-cards i {
   font-size: 24px;
   color: rgba(17, 24, 39, 0.55);
-  transition: color 200ms ease;
+  transition: color 500ms ease;
 }
 
 .payment-label:hover .payment-cards i {
@@ -443,7 +533,7 @@
   text-decoration: none;
   color: rgba(17, 24, 39, 0.88);
   font-weight: 600;
-  transition: all 180ms ease;
+  transition: all 500ms ease;
 }
 
 .btn-download:hover {
@@ -505,7 +595,7 @@
   border-radius: 16px;
   padding: 46px 24px;
   box-shadow: 0 4px 16px rgba(17, 24, 39, 0.06);
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .download-product:hover {
@@ -568,7 +658,7 @@
   border-radius: 12px;
   text-decoration: none;
   color: rgba(17, 24, 39, 0.88);
-  transition: all 200ms ease;
+  transition: all 500ms ease;
   background: #fff;
   cursor: pointer;
   font: inherit;
@@ -592,13 +682,13 @@
   place-items: center;
   background: rgba(17, 24, 39, 0.04);
   flex-shrink: 0;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .download-btn__icon-main {
   font-size: 20px;
   color: rgba(17, 24, 39, 0.7);
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .download-btn:hover .download-btn__icon-wrapper {
@@ -646,7 +736,7 @@
   color: #1f6feb;
   font-size: 15px;
   flex-shrink: 0;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
 }
 
 .download-btn:hover .download-btn__action {
@@ -738,13 +828,13 @@
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
-  transition: all 200ms ease;
+  transition: all 500ms ease;
   border: 2px solid transparent;
 }
 
 .btn-hero i {
   font-size: 14px;
-  transition: transform 200ms ease;
+  transition: transform 500ms ease;
 }
 
 .product-hero--primary .btn-hero {

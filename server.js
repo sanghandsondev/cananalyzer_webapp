@@ -36,22 +36,31 @@ app.get("/products/cbcmsimulator", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "products", "cbcmsimulator.html"));
 });
 
-app.get("/support", (req, res) => {
-  res.sendFile(path.join(__dirname, "views", "support.html"));
-});
-
 app.get("/feedback", (req, res) => {
   res.sendFile(path.join(__dirname, "views", "feedback.html"));
 });
 
+app.get("/my-licenses", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "my-licenses.html"));
+});
+
+app.get("/verify-email", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "verify-email.html"));
+});
+
+app.get("/reset-password", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "reset-password.html"));
+});
+
 // ------------------------ Authentication routes ------------------------
+// Register - initiate with email verification
 app.post("/api/auth/register", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
 
     // Validation
-    if (!username || !password) {
-      return res.status(400).json({ error: "Username and password are required" });
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: "Username, email, and password are required" });
     }
 
     if (username.length < 3 || username.length > 50) {
@@ -62,39 +71,133 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(400).json({ error: "Username can only contain letters, numbers, and underscores" });
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
     if (password.length < 6) {
       return res.status(400).json({ error: "Password must be at least 6 characters" });
     }
 
-    const result = await auth.register(username, password);
+    const result = await auth.registerUser(username, email, password);
     res.json(result);
   } catch (error) {
     console.error("Registration error:", error.message);
-    if (error.message === "Username already exists") {
+    if (error.message === "Username already exists" || error.message === "Email already exists") {
       return res.status(409).json({ error: error.message });
     }
     res.status(500).json({ error: "Registration failed. Please try again." });
   }
 });
 
+// Verify email and complete registration
+app.post("/api/auth/verify-email", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: "Verification token is required" });
+    }
+
+    const result = await auth.completeRegistration(token);
+    res.json(result);
+  } catch (error) {
+    console.error("Email verification error:", error.message);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Login (by username or email)
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res.status(400).json({ error: "Username and password are required" });
+      return res.status(400).json({ error: "Username/email and password are required" });
     }
 
-    const result = await auth.login(username, password);
+    const result = await auth.loginUser(username, password);
     res.json(result);
   } catch (error) {
     console.error("Login error:", error.message);
-    res.status(401).json({ error: "Invalid username or password" });
+    res.status(401).json({ error: error.message });
   }
 });
 
+// Forgot password
+app.post("/api/auth/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const result = await auth.requestPasswordReset(email);
+    res.json(result);
+  } catch (error) {
+    console.error("Forgot password error:", error.message);
+    res.status(500).json({ error: "Failed to process request" });
+  }
+});
+
+// Reset password (from email link)
+app.post("/api/auth/reset-password", async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: "Token and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    const result = await auth.completePasswordReset(token, newPassword);
+    res.json(result);
+  } catch (error) {
+    console.error("Reset password error:", error.message);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Change password (when logged in)
+app.post("/api/auth/change-password", auth.authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Current password and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters" });
+    }
+
+    const result = await auth.changePassword(req.user.id, currentPassword, newPassword);
+    res.json(result);
+  } catch (error) {
+    console.error("Change password error:", error.message);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Get current user
 app.get("/api/auth/me", auth.authenticateToken, (req, res) => {
   res.json({ user: req.user });
+});
+
+// Get user licenses
+app.get("/api/user/licenses", auth.authenticateToken, async (req, res) => {
+  try {
+    const licenses = await auth.getUserLicenses(req.user.id);
+    res.json({ licenses });
+  } catch (error) {
+    console.error("Error fetching licenses:", error.message);
+    res.status(500).json({ error: "Failed to fetch licenses" });
+  }
 });
 
 // ------------------------ Comments routes ------------------------
@@ -105,14 +208,14 @@ app.get("/api/comments", async (req, res) => {
     const offset = page * limit;
 
     // Get total count
-    const countResult = await db.query("SELECT COUNT(*) FROM feedback_comments");
+    const countResult = await db.query("SELECT COUNT(*) FROM comments");
     const total = parseInt(countResult.rows[0].count);
 
     // Get comments with user info, newest first
     const { rows: comments } = await db.query(
       `SELECT c.id, c.user_id, c.content, c.created_at, c.updated_at, u.username 
-       FROM feedback_comments c 
-       JOIN feedback_users u ON c.user_id = u.id 
+       FROM comments c 
+       JOIN users u ON c.user_id = u.id 
        ORDER BY c.created_at DESC 
        LIMIT $1 OFFSET $2`,
       [limit, offset]
@@ -141,7 +244,7 @@ app.post("/api/comments", auth.authenticateToken, async (req, res) => {
     }
 
     const { rows } = await db.query(
-      `INSERT INTO feedback_comments (user_id, content) VALUES ($1, $2) 
+      `INSERT INTO comments (user_id, content) VALUES ($1, $2) 
        RETURNING id, content, created_at`,
       [userId, content.trim()]
     );
@@ -173,7 +276,7 @@ app.put("/api/comments/:id", auth.authenticateToken, async (req, res) => {
 
     // Check if comment belongs to user
     const { rows: existingRows } = await db.query(
-      "SELECT user_id FROM feedback_comments WHERE id = $1",
+      "SELECT user_id FROM comments WHERE id = $1",
       [commentId]
     );
 
@@ -187,7 +290,7 @@ app.put("/api/comments/:id", auth.authenticateToken, async (req, res) => {
 
     // Update comment
     const { rows } = await db.query(
-      `UPDATE feedback_comments 
+      `UPDATE comments 
        SET content = $1, updated_at = CURRENT_TIMESTAMP 
        WHERE id = $2 
        RETURNING id, content, created_at, updated_at`,
@@ -215,7 +318,7 @@ app.delete("/api/comments/:id", auth.authenticateToken, async (req, res) => {
     }
 
     const result = await db.query(
-      "DELETE FROM feedback_comments WHERE id = $1 RETURNING id",
+      "DELETE FROM comments WHERE id = $1 RETURNING id",
       [commentId]
     );
 
@@ -231,26 +334,49 @@ app.delete("/api/comments/:id", auth.authenticateToken, async (req, res) => {
 });
 
 // ------------------------ Payment routes ------------------------
-app.post("/api/pay", async (req, res) => {
+// Helper middleware to optionally authenticate
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
   try {
-    const { email, productName, productPrice, paymentMethod, currency } = req.body;
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    req.user = null;
+    next();
+  }
+};
+
+app.post("/api/pay", auth.authenticateToken, async (req, res) => {
+  try {
+    const { productName, productPrice, paymentMethod, currency } = req.body;
+    const user = req.user;
 
     // Validation
-    if (!email || !productName || !productPrice || !paymentMethod) {
+    if (!productName || !productPrice || !paymentMethod) {
       return res.status(400).json({ 
         success: false, 
-        error: "Missing required fields: email, productName, productPrice, paymentMethod" 
+        error: "Missing required fields: productName, productPrice, paymentMethod" 
       });
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ 
+    // User must be authenticated
+    if (!user || !user.email) {
+      return res.status(401).json({ 
         success: false, 
-        error: "Invalid email format" 
+        error: "Authentication required. Please login to continue." 
       });
     }
+
+    const email = user.email;
 
     // Price validation
     const price = parseFloat(productPrice);
@@ -268,8 +394,8 @@ app.post("/api/pay", async (req, res) => {
       if (orderDetails && orderDetails.approveUrl) {
         try {
           await db.query(
-            "INSERT INTO paypal_orders (orderId, email, productName, productPrice, currency, status) VALUES ($1, $2, $3, $4, $5, $6)",
-            [orderDetails.orderId, email, productName, price, currency || 'USD', "CREATED"]
+            "INSERT INTO orders (order_id, email, product_name, product_price, currency, status, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            [orderDetails.orderId, email, productName, price, currency || 'USD', "CREATED", user.id]
           );
           
           return res.json({ 
@@ -319,7 +445,7 @@ app.get("/paypal/approve", async (req, res) => {
     }
 
     // Get the email from database first (the one user entered in form)
-    const { rows: orderRows } = await db.query("SELECT email FROM paypal_orders WHERE orderId = $1", [orderId]);
+    const { rows: orderRows } = await db.query("SELECT email FROM orders WHERE order_id = $1", [orderId]);
     const userEmail = orderRows[0]?.email || null;
 
     // 1. Capture the payment
@@ -346,14 +472,14 @@ app.get("/paypal/approve", async (req, res) => {
 
         try {
           await db.query(
-            `UPDATE paypal_orders SET 
+            `UPDATE orders SET 
               status = $1, 
-              payerId = $2, 
-              payerEmail = $3, 
-              payerGivenName = $4, 
-              payerSurname = $5, 
-              payerCountryCode = $6 
-            WHERE orderId = $7`,
+              payer_id = $2, 
+              payer_email = $3, 
+              payer_given_name = $4, 
+              payer_surname = $5, 
+              payer_country_code = $6 
+            WHERE order_id = $7`,
             ["COMPLETED", payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId]
           );
         } catch (err) {
@@ -361,17 +487,17 @@ app.get("/paypal/approve", async (req, res) => {
         }
         
         // Trigger license creation only if not already created
-        const { rows } = await db.query("SELECT email, licenseStatus FROM paypal_orders WHERE orderId = $1", [orderId]);
+        const { rows } = await db.query("SELECT email, license_status FROM orders WHERE order_id = $1", [orderId]);
         const row = rows[0];
-        if (row && row.licensestatus === 'NOT_CREATED') {
-          await db.query("UPDATE paypal_orders SET licenseStatus = $1 WHERE orderId = $2", ["REQUEST_CREATED", orderId]);
+        if (row && row.license_status === 'NOT_CREATED') {
+          await db.query("UPDATE orders SET license_status = $1 WHERE order_id = $2", ["REQUEST_CREATED", orderId]);
           
           license.createLicense(orderId).then(async licenseResult => {
             if (licenseResult) {
               console.log(`Successfully requested license creation for order ${orderId}`);
             } else {
               console.error(`Failed to request license creation for order ${orderId}`);
-              await db.query("UPDATE paypal_orders SET licenseStatus = $1 WHERE orderId = $2", ["CREATION_FAILED", orderId]);
+              await db.query("UPDATE orders SET license_status = $1 WHERE order_id = $2", ["CREATION_FAILED", orderId]);
             }
           });
         }
@@ -379,12 +505,12 @@ app.get("/paypal/approve", async (req, res) => {
       } else if (captureData.status === "PAYER_ACTION_REQUIRED" || captureData.status === "PENDING") {
         status = "PENDING";
         message = "Your payment is pending. We will notify you when it is completed.";
-        await db.query("UPDATE paypal_orders SET status = $1 WHERE orderId = $2", ["PENDING", orderId]);
+        await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", ["PENDING", orderId]);
       }
     }
 
     if (status === "FAILED") {
-        await db.query("UPDATE paypal_orders SET status = $1 WHERE orderId = $2", ["FAILED", orderId]);
+        await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", ["FAILED", orderId]);
     }
 
     // 3. Render the approval page with the status, orderId, and email (from form input)
@@ -405,17 +531,17 @@ app.get("/api/paypal/cancel-order", async (req, res) => {
   const { token: orderId } = req.query;
   if (orderId) {
     try {
-      const { rows } = await db.query("SELECT status FROM paypal_orders WHERE orderId = $1", [orderId]);
+      const { rows } = await db.query("SELECT status FROM orders WHERE order_id = $1", [orderId]);
       const row = rows[0];
 
       // Only delete the order if it was just created and not yet processed
       if (row && row.status === 'CREATED') {
-        await db.query("DELETE FROM paypal_orders WHERE orderId = $1", [orderId]);
+        await db.query("DELETE FROM orders WHERE order_id = $1", [orderId]);
         console.log(`Order ${orderId} with status CREATED was canceled and deleted from DB.`);
       } else if (row) {
         console.log(`Order ${orderId} with status ${row.status} was canceled but not deleted.`);
         // Optionally update status to CANCELED if needed
-        // await db.query("UPDATE paypal_orders SET status = $1 WHERE orderId = $2", ["CANCELED", orderId]);
+        // await db.query("UPDATE orders SET status = $1 WHERE orderId = $2", ["CANCELED", orderId]);
       }
     } catch (err) {
       console.error(`Error processing canceled order ${orderId}:`, err);
@@ -475,12 +601,12 @@ app.post("/api/paypal/webhook", express.raw({ type: 'application/json' }), async
   // 3. Store webhook data for auditing
   const { event_type, resource_type, resource_version, summary } = webhookEvent;
   await db.query(
-    `UPDATE paypal_orders SET 
-      webhookEventType = $1, 
-      webhookResourceType = $2, 
-      webhookResourceVersion = $3, 
-      webhookSummary = $4 
-    WHERE orderId = $5`, 
+    `UPDATE orders SET 
+      webhook_event_type = $1, 
+      webhook_resource_type = $2, 
+      webhook_resource_version = $3, 
+      webhook_summary = $4 
+    WHERE order_id = $5`, 
     [event_type, resource_type, resource_version, summary, orderId]
   );
 
@@ -489,7 +615,7 @@ app.post("/api/paypal/webhook", express.raw({ type: 'application/json' }), async
     console.log(`Webhook received: Order ${orderId} payment completed.`);
 
     try {
-      const { rows } = await db.query("SELECT email, licenseStatus, payerId FROM paypal_orders WHERE orderId = $1", [orderId]);
+      const { rows } = await db.query("SELECT email, license_status, payer_id FROM orders WHERE order_id = $1", [orderId]);
       let row = rows[0];
 
       if (!row) {
@@ -498,7 +624,7 @@ app.post("/api/paypal/webhook", express.raw({ type: 'application/json' }), async
       }
 
       // If payer info hasn't been saved yet (e.g., user didn't return to /approve), save it now.
-      if (!row.payerid && webhookEvent.resource?.payer) {
+      if (!row.payer_id && webhookEvent.resource?.payer) {
         const payer = webhookEvent.resource.payer;
         const payerInfo = {
           payerId: payer.payer_id,
@@ -510,32 +636,32 @@ app.post("/api/paypal/webhook", express.raw({ type: 'application/json' }), async
 
         console.log(`Webhook: Saving payer info for order ${orderId}`);
         await db.query(
-          `UPDATE paypal_orders SET 
-            payerId = $1, payerEmail = $2, payerGivenName = $3, payerSurname = $4, payerCountryCode = $5
-          WHERE orderId = $6`,
+          `UPDATE orders SET 
+            payer_id = $1, payer_email = $2, payer_given_name = $3, payer_surname = $4, payer_country_code = $5
+          WHERE order_id = $6`,
           [payerInfo.payerId, payerInfo.payerEmail, payerInfo.payerGivenName, payerInfo.payerSurname, payerInfo.payerCountryCode, orderId]
         );
       }
 
-      if (row.licensestatus === 'NOT_CREATED') {
-        await db.query("UPDATE paypal_orders SET status = $1 WHERE orderId = $2", ["COMPLETED", orderId]);
+      if (row.license_status === 'NOT_CREATED') {
+        await db.query("UPDATE orders SET status = $1 WHERE order_id = $2", ["COMPLETED", orderId]);
 
         if (row.email) {
-          await db.query("UPDATE paypal_orders SET licenseStatus = $1 WHERE orderId = $2", ["REQUEST_CREATED", orderId]);
+          await db.query("UPDATE orders SET license_status = $1 WHERE order_id = $2", ["REQUEST_CREATED", orderId]);
           console.log(`TODO from Webhook: Create license for ${row.email} for order ${orderId}`);
           license.createLicense(orderId).then(async licenseResult => {
             if (licenseResult) {
               console.log(`Webhook: Successfully requested license creation for order ${orderId}`);
             } else {
               console.error(`Webhook: Failed to request license creation for order ${orderId}`);
-              await db.query("UPDATE paypal_orders SET licenseStatus = $1 WHERE orderId = $2", ["CREATION_FAILED", orderId]);
+              await db.query("UPDATE orders SET license_status = $1 WHERE order_id = $2", ["CREATION_FAILED", orderId]);
             }
           });
         } else {
           console.error(`Webhook: Could not find email for order ${orderId} to create license.`);
         }
       } else {
-        console.log(`Webhook: License for order ${orderId} already requested or created (status: ${row.licensestatus}). Ignoring webhook.`);
+        console.log(`Webhook: License for order ${orderId} already requested or created (status: ${row.license_status}). Ignoring webhook.`);
       }
     } catch (err) {
       console.error(`Webhook: DB error processing order ${orderId}`, err);
@@ -556,7 +682,7 @@ app.post("/api/license/notify", async (req, res) => {
 
   try {
     // Update license status in DB
-    const updateResult = await db.query("UPDATE paypal_orders SET licenseStatus = $1 WHERE orderId = $2", ["CREATED", orderId]);
+    const updateResult = await db.query("UPDATE orders SET license_status = $1 WHERE order_id = $2", ["CREATED", orderId]);
 
     if (updateResult.rowCount === 0) {
       console.warn(`License notification: Order ${orderId} not found.`);
@@ -565,13 +691,27 @@ app.post("/api/license/notify", async (req, res) => {
 
     // Send the license key to the user's email
     const { rows } = await db.query(
-      `SELECT email, payerGivenName, payerSurname, productName, productPrice, currency, createdAt 
-       FROM paypal_orders WHERE orderId = $1`, 
+      `SELECT email, payer_given_name, payer_surname, product_name, product_price, currency, created_at, user_id 
+       FROM orders WHERE order_id = $1`, 
       [orderId]
     );
     const row = rows[0];
 
     if (row) {
+      // Save to licenses table if user is linked
+      if (row.user_id) {
+        try {
+          await db.query(
+            `INSERT INTO licenses (user_id, order_id, product_name, license_key, purchased_at)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [row.user_id, orderId, row.product_name, licenseKey, row.created_at]
+          );
+          console.log(`License saved to licenses for user ${row.user_id}`);
+        } catch (licenseErr) {
+          console.error(`Error saving license to licenses:`, licenseErr);
+        }
+      }
+
       // Use payerEmail from PayPal if available, otherwise fall back to form input email
       const recipientEmail = row.email;
       
@@ -579,13 +719,13 @@ app.post("/api/license/notify", async (req, res) => {
         console.log(`Sending license ${licenseKey} to ${recipientEmail} for order ${orderId}`);
         
         const customerInfo = {
-          givenName: row.payergivenname || '',
-          surname: row.payersurname || ''
+          givenName: row.payer_given_name || '',
+          surname: row.payer_surname || ''
         };
 
         const productInfo = {
-          productName: row.productname || 'CAN Analyzer License',
-          productPrice: parseFloat(row.productprice) || 0,
+          productName: row.product_name || 'CAN Analyzer License',
+          productPrice: parseFloat(row.product_price) || 0,
           currency: row.currency || 'USD'
         };
         
@@ -595,7 +735,7 @@ app.post("/api/license/notify", async (req, res) => {
           orderId, 
           customerInfo,
           productInfo,
-          row.createdat
+          row.created_at
         );
         
         mailer.sendEmail(recipientEmail, emailSubject, emailContent)
@@ -618,7 +758,7 @@ app.post("/api/license/notify", async (req, res) => {
 // ------------------------ API routes for Audit Order Info ------------------------
 app.get("/api/paypal/orders", async (req, res) => {
   try {
-    const { rows } = await db.query("SELECT * FROM paypal_orders ORDER BY createdAt DESC");
+    const { rows } = await db.query("SELECT * FROM orders ORDER BY created_at DESC");
     res.json(rows);
   } catch (err) {
     console.error("Error fetching orders from DB:", err);
@@ -629,10 +769,10 @@ app.get("/api/paypal/orders", async (req, res) => {
 app.get("/api/paypal/orders/:orderId/status", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const { rows } = await db.query("SELECT status, licenseStatus FROM paypal_orders WHERE orderId = $1", [orderId]);
+    const { rows } = await db.query("SELECT status, license_status FROM orders WHERE order_id = $1", [orderId]);
     const row = rows[0];
     if (row) {
-      res.json({ status: row.status, licenseStatus: row.licensestatus });
+      res.json({ status: row.status, licenseStatus: row.license_status });
     } else {
       res.status(404).json({ error: "Order not found." });
     }
@@ -645,7 +785,7 @@ app.get("/api/paypal/orders/:orderId/status", async (req, res) => {
 app.get("/api/paypal/orders/:orderId", async (req, res) => {
   const { orderId } = req.params;
   try {
-    const { rows } = await db.query("SELECT * FROM paypal_orders WHERE orderId = $1", [orderId]);
+    const { rows } = await db.query("SELECT * FROM orders WHERE order_id = $1", [orderId]);
     const row = rows[0];
     if (row) {
       res.json(row);
